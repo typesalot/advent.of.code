@@ -10,11 +10,16 @@ int calcListDistance( vector<int>& list1, vector<int>& list2 ) {
     return distance;
 }
 
+//  time = O(N+K)
+// space = O(K)
 int calcListSimilarity1(vector<int>& list1, vector<int>& list2){
     int similarity = 0;
+    // space = O(K), worst case no duplicates, so map has a single occurance for all unique elemeents
     unordered_map<int,int> occurances;
+    // time = O(K)
     for( auto i : list2 )
         occurances[i]++;
+    // time = O(N)
     for( auto i : list1 )
     {
         auto res = occurances.find(i);
@@ -24,6 +29,8 @@ int calcListSimilarity1(vector<int>& list1, vector<int>& list2){
     return similarity;
 }
 
+//  time = 2*O(logN)+O(N+K)
+// space = O(1)
 int calcListSimilarity2(vector<int>& list1, vector<int>& list2)
 {
     int similarity = 0;
