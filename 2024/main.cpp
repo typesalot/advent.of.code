@@ -14,7 +14,7 @@ int main(int argc, char** argv) {
     if( !test_val )
     {
         cout << "Testing passed. Running main scenarios." << endl;
-        
+
         day01();    // Day 1: Historian Hysteria
         day02();    // Day 2: Red-Nosed Reports
     }
@@ -49,11 +49,8 @@ void day01() {
 // Day 2: Red-Nosed Reports
 void day02()
 {
-    cout << endl << "Day 02 - *" << endl;
-    cout << "input/day02.input.0.txt" << endl;
-    cout << "    safe          = " << numSafeReports("input/day02.input.0.txt") << endl;
-    cout << "    safe (dampen) = " << numSafeReportsWithTolerance("input/day02.input.0.txt") << endl;
-    cout << "input/day02.input.1.txt" << endl;
-    cout << "    safe          = " << numSafeReports("input/day02.input.1.txt") << endl;
-    cout << "    safe (dampen) = " << numSafeReportsWithTolerance("input/day02.input.1.txt") << endl;
+    cout << endl << "Day 02 - **" << endl;
+    cout << "input/day02.input.txt" << endl;
+    cout << "    safe          = " << numSafeReports("input/day02.input.txt") << endl;
+    cout << "    safe (dampen) = " << numSafeReportsWithTolerance("input/day02.input.txt") << endl;
 }
