@@ -1,7 +1,5 @@
 #include "day02.h"
 
-bool debug = false;
-
 void readInput( const string& input, vector<vector<int>>& reports )
 {
     auto f = ifstream(input);
@@ -15,43 +13,43 @@ void readInput( const string& input, vector<vector<int>>& reports )
     }
 }
 
-string tostring( const vector<int>& report )
-{
-    stringstream s;
-    for( auto r : report )
-        if( s.str().length() )
-            s << ", " << r;
-        else
-            s << r;
-    return s.str();
-}
-
-vector<int> compute_grad( const vector<int>& report )
-{
-    vector<int> g;
-    for( int i = 0; i < report.size() - 1; i++ )
-        g.push_back( report[i+1]-report[i]);
-    return g;
-}
-
-std::tuple<bool,int> isSafe( const vector<int>& report )
+std::tuple<bool,int> isSafe( const vector<int>& report, int skip = -1 )
 {
     bool safe = false;
 
     bool ltz = false;
+    bool ltz_set = false;
     int i = 0;
+    int j = 0;
 
     for( i = 0; i < report.size() - 1; i++ )
     {
-        int grad = report[i] - report[i+1];
+        // Boundary conditions for skipping an element contribution; used in part2
+        if( skip != -1 )
+        {
+            if( i == skip )
+                continue;
+            j = i + 1;
+            if( j == skip )
+                j++;
+            if( j == report.size() )
+                continue;
+        }
+        else
+            j = i + 1;
+
+        int grad = report[i] - report[j];
         
         // check1: gradient magnitude
         if( grad > 3 || grad < -3 || grad == 0 )
             break;
 
         // check1: direction
-        if( i == 0 )
+        if( !ltz_set )
+        {
             ltz = grad < 0;
+            ltz_set = true;
+        }
         else if( ltz && grad > 0 )
             break;
         else if( !ltz && grad < 0 )
@@ -97,36 +95,21 @@ int _numSafeReportsWithTolerance( const vector<vector<int>>& reports )
         auto [is_safe,i] = isSafe(report);
         if( !is_safe )
         {
-            // opportunity window = [i-1,i,i+1]
-
+            // safety window = [i-1,i,i+1]
             // corner case: removing i-1, but only for i=1 when removing the 0th element might make a safe gradient
             if( i == 1 )
-            {
-                vector<int> a = report;
-                a.erase( a.begin() - 1 );
-                tie( is_safe, tmp ) = isSafe(a);
-            }
+                tie( is_safe, tmp ) = isSafe(report, i - 1);
 
             // common case 1: removing i makes i-1 -> i+1 safe
             if( !is_safe )
-            {
-                vector<int> a = report;
-                a.erase( a.begin() + i );
-                tie( is_safe, tmp ) = isSafe(a);
-            }
+                tie( is_safe, tmp ) = isSafe(report,i);
             
             // common case 2: removing i+1 makes i-1 -> i safe
             if( !is_safe )
-            {
-                vector<int> a = report;
-                a.erase( a.begin() + i + 1 );
-                tie( is_safe, tmp ) = isSafe(a);
-            }
+                tie( is_safe, tmp ) = isSafe(report,i+1);
             
             if( is_safe )
                 safe++;
-            if( debug )
-                cout << is_safe << " = [" << tostring(report) << "]" << endl;
         }
         else
             safe++;
