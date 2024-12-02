@@ -1,15 +1,31 @@
+#include "common.h"
 #include "day01.h"
 #include "day02.h"
 
 void day01();
 void day02();
 
-int main() {
-    cout << "Advent of Code 2024" << endl;
-    day01();    // Day 1: Historian Hysteria
-    day02();    // Day 2: Red-Nosed Reports
+int main(int argc, char** argv) {
+    cout << "Advent of Code 2024" << endl << endl;
+
+    cout << "Running unit tests..." << endl;
+    ::testing::InitGoogleTest(&argc,argv);
+    int test_val = RUN_ALL_TESTS();
+    if( !test_val )
+    {
+        cout << "Testing passed. Running main scenarios." << endl;
+        
+        day01();    // Day 1: Historian Hysteria
+        day02();    // Day 2: Red-Nosed Reports
+    }
+    else
+    {
+        cout << "Testing failed, skipping main scenarios." << endl;
+    }
+
     cout << endl;
-    return 0;
+
+    return test_val;
 }
 
 // Day 1: Historian Hysteria
@@ -33,9 +49,11 @@ void day01() {
 // Day 2: Red-Nosed Reports
 void day02()
 {
-    cout << endl << "Day 02 - " << endl;
+    cout << endl << "Day 02 - *" << endl;
     cout << "input/day02.input.0.txt" << endl;
-    cout << "       safe = " << numSafeReports("input/day02.input.0.txt") << endl;
+    cout << "    safe          = " << numSafeReports("input/day02.input.0.txt") << endl;
+    cout << "    safe (dampen) = " << numSafeReportsWithTolerance("input/day02.input.0.txt") << endl;
     cout << "input/day02.input.1.txt" << endl;
-    cout << "       safe = " << numSafeReports("input/day02.input.1.txt") << endl;
+    cout << "    safe          = " << numSafeReports("input/day02.input.1.txt") << endl;
+    cout << "    safe (dampen) = " << numSafeReportsWithTolerance("input/day02.input.1.txt") << endl;
 }

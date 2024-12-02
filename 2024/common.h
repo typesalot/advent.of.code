@@ -19,4 +19,6 @@
 
 using namespace std;
 
+#include <gtest/gtest.h>
+
 vector<string> split(const string& s, char delimiter);
