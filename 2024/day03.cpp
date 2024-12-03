@@ -39,11 +39,12 @@ public:
     virtual bool    has_capture(){ return false; }
     virtual int     get_capture(){ return 0; }
     virtual void    reset(){};
+    virtual bool    is_enabled(){ return true; }
 
     match_node* find_edge( const char v )
     {
         for( const auto& edge : edges )
-            if( edge->match(v) )
+            if( edge->is_enabled() && edge->match(v) )
                 return edge.get();
         return nullptr;
     }
@@ -54,10 +55,13 @@ public:
 class match_keyword : public match_node
 {
 public:
+    bool enabled = true;
     string keyword;
     int pos = 0;
+    std::function<void(void)> oncomplete;
 
-    match_keyword( const string& kw ) : keyword( kw ){};
+    match_keyword( const string& kw ) : keyword( kw ), oncomplete( [](){} ){};
+    match_keyword( const string& kw, decltype(oncomplete) cb ) : keyword( kw ), oncomplete( cb ){};
     ~match_keyword() = default;
 
     bool match( const char v ) override
@@ -71,10 +75,24 @@ public:
     void consume( const char v ) override
     {
         pos++;
+        if( pos == keyword.length() )
+            oncomplete();
     }
 
     virtual void reset() override {
         pos = 0;
+    }
+
+    bool is_enabled() override{
+        return this->enabled;
+    }
+
+    void enable(){
+        this->enabled = true;
+    }
+
+    void disable(){
+        this->enabled = false;
     }
 };
 
@@ -124,20 +142,27 @@ int _calcMulls( const string& corrupted, bool use_enables )
     auto kw_mul = make_shared<match_keyword>("mul(");
     auto kw_comma = make_shared<match_keyword>(",");
     auto kw_cparen = make_shared<match_keyword>(")");
-    auto kw_dont = make_shared<match_keyword>("don't()");
-    auto kw_do = make_shared<match_keyword>("do()");
+    auto kw_do = make_shared<match_keyword>("do()", [&kw_mul](){
+        kw_mul->enable();
+    });
+    auto kw_nt = make_shared<match_keyword>("n't()", [&kw_mul](){
+        kw_mul->disable();
+    });
     auto num1 = make_shared<capture_num>();
     auto num2 = make_shared<capture_num>();
 
     // create graph edges
     head->edges.push_back(kw_mul);      // mul(
 
+    if( use_enables )
+    {
+        head->edges.push_back(kw_do);   // do()
+        kw_do->edges.push_back(kw_nt);  // don't()
+    }
+
     kw_mul->edges.push_back(num1);      // mul(12
-
     num1->edges.push_back(kw_comma);    // mul(12,
-
     kw_comma->edges.push_back(num2);    // mul(12,54
-
     num2->edges.push_back(kw_cparen);   // mul(12,54)
 
     auto do_reset = [&]()
@@ -145,15 +170,14 @@ int _calcMulls( const string& corrupted, bool use_enables )
         kw_mul->reset();
         kw_comma->reset();
         kw_cparen->reset();
-        kw_dont->reset();
         kw_do->reset();
+        kw_nt->reset();
         num1->reset();
         num2->reset();
     };
 
     // match input
     match_node* current = head.get();
-    match_node* next = nullptr;
     for( auto c : corrupted )
     {
         while( !current->match(c) ){
@@ -188,7 +212,7 @@ TEST( calcMulls, ExampleAll )
 TEST( calcMulls, ExampleEnables )
 {
     //                     ---------xxxxxxx.........
-    // EXPECT_EQ( _calcMulls("mul(10,5)don't()mull(2,4)",true), 50 );
-    //                        --------           xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx++++ -------- --> 2*4 + 8*5 = 48
-    //EXPECT_EQ( _calcMulls("xmul(2,4)&mul[3,7]!^don't()_mul(5,5)+mul(32,64](mul(11,8)undo()?mul(8,5))", false), 48 );
+    EXPECT_EQ( _calcMulls("mul(10,5)don't()mull(2,4)",true), 50 );
+    //                      --------           xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx++++ -------- --> 2*4 + 8*5 = 48
+    EXPECT_EQ( _calcMulls("xmul(2,4)&mul[3,7]!^don't()_mul(5,5)+mul(32,64](mul(11,8)undo()?mul(8,5))", true), 48 );
 }
