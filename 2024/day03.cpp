@@ -24,6 +24,8 @@ int calcMullsEnables( const string& input )
     return _calcMulls(s,true);
 }
 
+class graph;
+
 class match_node
 {
 public:
@@ -34,12 +36,9 @@ public:
         return find_edge(v) == nullptr;
     }
 
-    virtual void    consume( const char v ){};
-
-    virtual bool    has_capture(){ return false; }
-    virtual int     get_capture(){ return 0; }
-    virtual void    reset(){};
-    virtual bool    is_enabled(){ return true; }
+    virtual void consume( const char v ){};
+    virtual void reset(){};
+    virtual bool is_enabled(){ return true; }
 
     match_node* find_edge( const char v )
     {
@@ -49,17 +48,20 @@ public:
         return nullptr;
     }
 
+private:
+    friend class graph;
     vector<shared_ptr<match_node>> edges;
 };
 
 class match_keyword : public match_node
 {
-public:
+private:
     bool enabled = true;
     string keyword;
     int pos = 0;
     std::function<void(void)> oncomplete;
 
+public:
     match_keyword( const string& kw ) : keyword( kw ), oncomplete( [](){} ){};
     match_keyword( const string& kw, decltype(oncomplete) cb ) : keyword( kw ), oncomplete( cb ){};
     ~match_keyword() = default;
@@ -101,8 +103,6 @@ class capture_num : public match_node
 public:
     int num = 0;
 
-    bool has_data = false;
-
     capture_num() = default;
     ~capture_num() = default;
 
@@ -115,21 +115,40 @@ public:
         num += v - '0';
     }
 
-    virtual bool has_capture() override {
-        return has_data;
-    }
-
-    virtual int get_capture() override {
+    int get_capture() {
         return num;
     }
 
     virtual void reset() override {
-        has_data = 0;
         num = 0;
     }
+};
 
-    int operator*( const capture_num& lhs ){
-        return lhs.num * this->num;
+class graph
+{
+public:
+    shared_ptr<match_node>  head = nullptr;
+
+    std::vector<shared_ptr<match_node>> nodes;
+
+    template<typename T, typename ... ArgsT>
+    auto add_node( ArgsT&&... args ) -> shared_ptr<T>
+    {
+        auto new_node = make_shared<T>( std::forward<ArgsT>( args )... );
+        nodes.emplace_back( new_node );
+        return new_node;
+    }
+
+    template<typename T1,typename T2>
+    void add_edge( shared_ptr<T1>& from, shared_ptr<T2>& to )
+    {
+        from->edges.emplace_back( to );
+    }
+
+    void reset()
+    {
+        for( auto& node : nodes )
+            node->reset();
     }
 };
 
@@ -137,82 +156,92 @@ int _calcMulls( const string& corrupted, bool use_enables )
 {
     int total = 0;
 
-    // create graph nodes
-    auto head = make_shared<match_node>();
-    auto kw_mul = make_shared<match_keyword>("mul(");
-    auto kw_comma = make_shared<match_keyword>(",");
-    auto kw_cparen = make_shared<match_keyword>(")");
-    auto kw_do = make_shared<match_keyword>("do()", [&kw_mul](){
+    // create graph
+    graph g;
+    g.head = g.add_node<match_node>();
+
+    auto kw_mul = g.add_node<match_keyword>("mul(");
+    auto   num1 = g.add_node<capture_num>();
+    auto   num2 = g.add_node<capture_num>();
+    auto  comma = g.add_node<match_keyword>(",");
+
+    auto cparen = g.add_node<match_keyword>(")",[&num1,&num2,&total](){
+        int a = num1->get_capture();
+        int b = num2->get_capture();
+        total += a * b;
+    });
+    
+    auto _do = g.add_node<match_keyword>("do()", [&kw_mul](){
         kw_mul->enable();
     });
-    auto kw_nt = make_shared<match_keyword>("n't()", [&kw_mul](){
+
+    auto nt = g.add_node<match_keyword>("n't()", [&kw_mul](){
         kw_mul->disable();
     });
-    auto num1 = make_shared<capture_num>();
-    auto num2 = make_shared<capture_num>();
 
     // create graph edges
-    head->edges.push_back(kw_mul);      // mul(
+    g.add_edge( g.head, kw_mul );   // mul()
 
     if( use_enables )
     {
-        head->edges.push_back(kw_do);   // do()
-        kw_do->edges.push_back(kw_nt);  // don't()
+        g.add_edge( g.head, _do );  // do()
+        g.add_edge( _do, nt );      // don't()
     }
 
-    kw_mul->edges.push_back(num1);      // mul(12
-    num1->edges.push_back(kw_comma);    // mul(12,
-    kw_comma->edges.push_back(num2);    // mul(12,54
-    num2->edges.push_back(kw_cparen);   // mul(12,54)
-
-    auto do_reset = [&]()
-    {
-        kw_mul->reset();
-        kw_comma->reset();
-        kw_cparen->reset();
-        kw_do->reset();
-        kw_nt->reset();
-        num1->reset();
-        num2->reset();
-    };
+    g.add_edge( kw_mul, num1 ); // mul(25
+    g.add_edge( num1, comma );  // mul(25,
+    g.add_edge( comma, num2 );  // mul(25,48
+    g.add_edge( num2, cparen ); // mul(25,48)
 
     // match input
-    match_node* current = head.get();
+    match_node* current = g.head.get();
     for( auto c : corrupted )
     {
         while( !current->match(c) ){
             current = current->find_edge(c);
 
             if( current == nullptr ){
-                current = head.get();
-                do_reset();
+                current = g.head.get();
+                g.reset();
             }
         }
 
         current->consume( c );
 
-        // if we've captured 2 numbers, do the math
-        if( current == kw_cparen.get() )
-            total += *num1 * *num2;
-
         // if we're going back to the start, reset any captured numbers
-        if( current == head.get() )
-            do_reset();
+        if( current == g.head.get() )
+            g.reset();
     }
 
     return total;
 }
 
-TEST( calcMulls, ExampleAll )
+TEST( Day3, Part1Examples )
 {
     EXPECT_EQ( _calcMulls("mul(10,5)",false), 50 );
     EXPECT_EQ( _calcMulls("xmul(2,4)%&mul[3,7]!@^do_not_mul(5,5)+mul(32,64]then(mul(11,8)mul(8,5))", false), 161 );
 }
 
-TEST( calcMulls, ExampleEnables )
+TEST( Day3, Part2Examples )
 {
     //                     ---------xxxxxxx.........
     EXPECT_EQ( _calcMulls("mul(10,5)don't()mull(2,4)",true), 50 );
     //                      --------           xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx++++ -------- --> 2*4 + 8*5 = 48
     EXPECT_EQ( _calcMulls("xmul(2,4)&mul[3,7]!^don't()_mul(5,5)+mul(32,64](mul(11,8)undo()?mul(8,5))", true), 48 );
+}
+
+TEST( Day3, Part1 )
+{
+    string s = readInput("input/day03.txt");
+    int ans = _calcMulls(s,false);
+    EXPECT_EQ( ans, 192767529 );
+    cout << "Answer = " << ans << endl;
+}
+
+TEST( Day3, Part2 )
+{
+    string s = readInput("input/day03.txt");
+    int ans = _calcMulls(s,true);
+    EXPECT_EQ( ans, 104083373 );
+    cout << "Answer = " << ans << endl;
 }

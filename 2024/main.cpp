@@ -1,11 +1,9 @@
 #include "common.h"
 #include "day01.h"
 #include "day02.h"
-#include "day03.h"
 
 void day01();
 void day02();
-void day03();
 
 int main(int argc, char** argv) {
     cout << "Advent of Code 2024" << endl << endl;
@@ -19,7 +17,6 @@ int main(int argc, char** argv) {
 
         day01();    // Day 1: Historian Hysteria
         day02();    // Day 2: Red-Nosed Reports
-        day03();    // Day 3: Mull It Over
     }
     else
     {
@@ -56,13 +53,4 @@ void day02()
     cout << "input/day02.input.txt" << endl;
     cout << "    safe          = " << numSafeReports("input/day02.input.txt") << endl;
     cout << "    safe (dampen) = " << numSafeReportsWithTolerance("input/day02.input.txt") << endl;
-}
-
-// Day 3: Mull It Over
-void day03()
-{
-    cout << endl << "Day 03 - " << endl;
-    cout << "input/day03.txt" << endl;
-    cout << "    mull(x,y)     all = " << calcMullsAll("input/day03.txt") << endl;
-    cout << "    mull(x,y) enables = " << calcMullsEnables("input/day03.txt") << endl;
 }
