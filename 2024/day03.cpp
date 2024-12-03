@@ -18,15 +18,15 @@ public:
     match_node() = default;
     virtual ~match_node() = default;
 
-    virtual bool match( const char v ){
+    virtual bool match( char v ){
         return find_edge(v) == nullptr;
     }
 
-    virtual void consume( const char v ){};
+    virtual void consume( char v ){};
     virtual void reset(){};
     virtual bool is_enabled(){ return true; }
 
-    match_node* find_edge( const char v )
+    match_node* find_edge( char v )
     {
         for( const auto& edge : edges )
             if( edge->is_enabled() && edge->match(v) )
@@ -52,7 +52,7 @@ public:
     match_keyword( const string& kw, decltype(oncomplete) cb ) : keyword( kw ), oncomplete( cb ){};
     ~match_keyword() = default;
 
-    bool match( const char v ) override
+    bool match( char v ) override
     {
         if( pos < keyword.length() && 
             keyword[pos] == v )
@@ -60,7 +60,7 @@ public:
         return false;
     }
 
-    void consume( const char v ) override
+    void consume( char v ) override
     {
         pos++;
         if( pos == keyword.length() )
@@ -92,11 +92,11 @@ public:
     capture_num() = default;
     ~capture_num() = default;
 
-    bool match( const char v ) override {
+    bool match( char v ) override {
         return isdigit(v);
     }
 
-    void consume( const char v ) override {
+    void consume( char v ) override {
         num *= 10;
         num += v - '0';
     }
