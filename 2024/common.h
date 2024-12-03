@@ -17,6 +17,10 @@
 #include <functional>
 #include <iterator>
 
+#include <memory>
+#include <utility>
+#include <cctype>
+
 using namespace std;
 
 #include <gtest/gtest.h>

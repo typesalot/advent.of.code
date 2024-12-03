@@ -1,5 +1,7 @@
 #include "day02.h"
 
+int _numSafeReportsWithTolerance( const vector<vector<int>>& reports );
+
 void readInput( const string& input, vector<vector<int>>& reports )
 {
     auto f = ifstream(input);
