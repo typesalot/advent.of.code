@@ -1,7 +1,5 @@
 #include "common.h"
 
-int _calcMulls( const string& corrupted, bool use_enables );
-
 string readInput( const string& input )
 {
     auto f = ifstream( input );
@@ -10,18 +8,6 @@ string readInput( const string& input )
     while( getline(f,s) )
         stream << s;
     return stream.str();
-}
-
-int calcMullsAll( const string& input )
-{
-    string s = readInput(input);
-    return _calcMulls(s,false);
-}
-
-int calcMullsEnables( const string& input )
-{
-    string s = readInput(input);
-    return _calcMulls(s,true);
 }
 
 class graph;
@@ -152,7 +138,7 @@ public:
     }
 };
 
-int _calcMulls( const string& corrupted, bool use_enables )
+int calcMulls( const string& corrupted, bool use_enables )
 {
     int total = 0;
 
@@ -218,22 +204,22 @@ int _calcMulls( const string& corrupted, bool use_enables )
 
 TEST( Day3, Part1Examples )
 {
-    EXPECT_EQ( _calcMulls("mul(10,5)",false), 50 );
-    EXPECT_EQ( _calcMulls("xmul(2,4)%&mul[3,7]!@^do_not_mul(5,5)+mul(32,64]then(mul(11,8)mul(8,5))", false), 161 );
+    EXPECT_EQ( calcMulls("mul(10,5)",false), 50 );
+    EXPECT_EQ( calcMulls("xmul(2,4)%&mul[3,7]!@^do_not_mul(5,5)+mul(32,64]then(mul(11,8)mul(8,5))", false), 161 );
 }
 
 TEST( Day3, Part2Examples )
 {
     //                     ---------xxxxxxx.........
-    EXPECT_EQ( _calcMulls("mul(10,5)don't()mull(2,4)",true), 50 );
+    EXPECT_EQ( calcMulls("mul(10,5)don't()mull(2,4)",true), 50 );
     //                      --------           xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx++++ -------- --> 2*4 + 8*5 = 48
-    EXPECT_EQ( _calcMulls("xmul(2,4)&mul[3,7]!^don't()_mul(5,5)+mul(32,64](mul(11,8)undo()?mul(8,5))", true), 48 );
+    EXPECT_EQ( calcMulls("xmul(2,4)&mul[3,7]!^don't()_mul(5,5)+mul(32,64](mul(11,8)undo()?mul(8,5))", true), 48 );
 }
 
 TEST( Day3, Part1 )
 {
     string s = readInput("input/day03.txt");
-    int ans = _calcMulls(s,false);
+    int ans = calcMulls(s,false);
     EXPECT_EQ( ans, 192767529 );
     cout << "Answer = " << ans << endl;
 }
@@ -241,7 +227,7 @@ TEST( Day3, Part1 )
 TEST( Day3, Part2 )
 {
     string s = readInput("input/day03.txt");
-    int ans = _calcMulls(s,true);
+    int ans = calcMulls(s,true);
     EXPECT_EQ( ans, 104083373 );
     cout << "Answer = " << ans << endl;
 }
