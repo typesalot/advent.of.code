@@ -1,6 +1,6 @@
 #include "day03.h"
 
-int _calcMulls( const string& corrupted );
+int _calcMulls( const string& corrupted, bool use_enables );
 
 string readInput( const string& input )
 {
@@ -12,147 +12,183 @@ string readInput( const string& input )
     return stream.str();
 }
 
-int calcMulls( const string& input )
+int calcMullsAll( const string& input )
 {
     string s = readInput(input);
-    return _calcMulls(s);
+    return _calcMulls(s,false);
+}
+
+int calcMullsEnables( const string& input )
+{
+    string s = readInput(input);
+    return _calcMulls(s,true);
 }
 
 class match_node
 {
 public:
-    match_node( match_node* _head ) : head(_head) {};
+    match_node() = default;
     virtual ~match_node() = default;
 
-    virtual match_node* match( const char v ) = 0;
-    virtual bool        has_capture(){ return false; }
-    virtual int         get_capture(){ return 0; }
-    virtual void        reset(){};
-    bool                is_head(){ return this == this->head; }
+    virtual bool match( const char v ){
+        return find_edge(v) == nullptr;
+    }
 
-    match_node*            head = nullptr;
-    shared_ptr<match_node> next = nullptr;
+    virtual void    consume( const char v ){};
+
+    virtual bool    has_capture(){ return false; }
+    virtual int     get_capture(){ return 0; }
+    virtual void    reset(){};
+
+    match_node* find_edge( const char v )
+    {
+        for( const auto& edge : edges )
+            if( edge->match(v) )
+                return edge.get();
+        return nullptr;
+    }
+
+    vector<shared_ptr<match_node>> edges;
 };
 
-class exact_single : public match_node
+class match_keyword : public match_node
 {
 public:
-    char _c;
+    string keyword;
+    int pos = 0;
 
-    exact_single( match_node* _head, char c ) : match_node(_head), _c( c ){};
-    ~exact_single() = default;
+    match_keyword( const string& kw ) : keyword( kw ){};
+    ~match_keyword() = default;
 
-    match_node* match( const char v )
+    bool match( const char v ) override
     {
-        if( this->_c == v )
-            return this->next.get();
-        return this->head;
+        if( pos < keyword.length() && 
+            keyword[pos] == v )
+            return true;
+        return false;
+    }
+
+    void consume( const char v ) override
+    {
+        pos++;
+    }
+
+    virtual void reset() override {
+        pos = 0;
     }
 };
 
 class capture_num : public match_node
 {
 public:
-    char _c;
     int num = 0;
 
     bool has_data = false;
 
-    capture_num( match_node* _head, char c ) : match_node(_head), _c( c ){};
+    capture_num() = default;
     ~capture_num() = default;
 
-    match_node* match( const char v ) override
-    {
-        if( isdigit(v) )
-        {
-            num *= 10;
-            num += v - '0';
-            return this;
-        }
-
-        if( this->_c == v )
-        {
-            has_data = true;
-            return this->next.get();
-        }
-
-        this->reset();
-        return this->head;
+    bool match( const char v ) override {
+        return isdigit(v);
     }
 
-    virtual bool has_capture() override
-    {
+    void consume( const char v ) override {
+        num *= 10;
+        num += v - '0';
+    }
+
+    virtual bool has_capture() override {
         return has_data;
     }
 
-    virtual int get_capture() override
-    {
+    virtual int get_capture() override {
         return num;
     }
 
-    virtual void reset() override
-    {
+    virtual void reset() override {
         has_data = 0;
         num = 0;
     }
 
-    int operator*( const capture_num& lhs )
-    {
+    int operator*( const capture_num& lhs ){
         return lhs.num * this->num;
     }
 };
 
-int _calcMulls( const string& corrupted )
+int _calcMulls( const string& corrupted, bool use_enables )
 {
     int total = 0;
 
-    // create graph
-    auto head = make_shared<exact_single>(nullptr,'m');
-    head->head = head.get();
+    // create graph nodes
+    auto head = make_shared<match_node>();
+    auto kw_mul = make_shared<match_keyword>("mul(");
+    auto kw_comma = make_shared<match_keyword>(",");
+    auto kw_cparen = make_shared<match_keyword>(")");
+    auto kw_dont = make_shared<match_keyword>("don't()");
+    auto kw_do = make_shared<match_keyword>("do()");
+    auto num1 = make_shared<capture_num>();
+    auto num2 = make_shared<capture_num>();
 
-    match_node* current = head.get();
+    // create graph edges
+    head->edges.push_back(kw_mul);      // mul(
 
-    current->next = make_shared<exact_single>(head.get(),'u');
-    current = current->next.get();
-    current->next = make_shared<exact_single>(head.get(),'l');
-    current = current->next.get();
-    current->next = make_shared<exact_single>(head.get(),'(');
-    current = current->next.get();
-    auto num1 = make_shared<capture_num>(head.get(), ',');
-    auto num2 = make_shared<capture_num>(head.get(), ')');
-    current->next = num1;
-    num1->next = num2;
-    num2->next = head;
+    kw_mul->edges.push_back(num1);      // mul(12
+
+    num1->edges.push_back(kw_comma);    // mul(12,
+
+    kw_comma->edges.push_back(num2);    // mul(12,54
+
+    num2->edges.push_back(kw_cparen);   // mul(12,54)
+
+    auto do_reset = [&]()
+    {
+        kw_mul->reset();
+        kw_comma->reset();
+        kw_cparen->reset();
+        kw_dont->reset();
+        kw_do->reset();
+        num1->reset();
+        num2->reset();
+    };
 
     // match input
-    current = head.get();
+    match_node* current = head.get();
+    match_node* next = nullptr;
     for( auto c : corrupted )
     {
-        // get next element in the graph based on the current character
-        auto next = current->match( c );
+        while( !current->match(c) ){
+            current = current->find_edge(c);
+
+            if( current == nullptr ){
+                current = head.get();
+                do_reset();
+            }
+        }
+
+        current->consume( c );
 
         // if we've captured 2 numbers, do the math
-        if( num1->has_capture() &&
-            num2->has_capture() )
-        {
+        if( current == kw_cparen.get() )
             total += *num1 * *num2;
-        }
 
         // if we're going back to the start, reset any captured numbers
-        if( next->is_head() )
-        {
-            num1->reset();
-            num2->reset();
-        }
-
-        current = next;
+        if( current == head.get() )
+            do_reset();
     }
 
     return total;
 }
 
-TEST( calcMulls, Example )
+TEST( calcMulls, ExampleAll )
 {
-    EXPECT_EQ( _calcMulls("mul(10,5)"), 50 );
-    EXPECT_EQ( _calcMulls("xmul(2,4)%&mul[3,7]!@^do_not_mul(5,5)+mul(32,64]then(mul(11,8)mul(8,5))"), 161 );
+    EXPECT_EQ( _calcMulls("mul(10,5)",false), 50 );
+    EXPECT_EQ( _calcMulls("xmul(2,4)%&mul[3,7]!@^do_not_mul(5,5)+mul(32,64]then(mul(11,8)mul(8,5))", false), 161 );
+}
+
+TEST( calcMulls, ExampleEnables )
+{
+    //                     ---------xxxxxxx.........
+    // EXPECT_EQ( _calcMulls("mul(10,5)don't()mull(2,4)",true), 50 );
+    //                        --------           xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx++++ -------- --> 2*4 + 8*5 = 48
+    //EXPECT_EQ( _calcMulls("xmul(2,4)&mul[3,7]!^don't()_mul(5,5)+mul(32,64](mul(11,8)undo()?mul(8,5))", false), 48 );
 }

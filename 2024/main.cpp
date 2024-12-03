@@ -63,5 +63,6 @@ void day03()
 {
     cout << endl << "Day 03 - " << endl;
     cout << "input/day03.txt" << endl;
-    cout << "    mull(x,y) total = " << calcMulls("input/day03.txt") << endl;
+    cout << "    mull(x,y)     all = " << calcMullsAll("input/day03.txt") << endl;
+    cout << "    mull(x,y) enables = " << calcMullsEnables("input/day03.txt") << endl;
 }

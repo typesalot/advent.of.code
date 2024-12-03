@@ -1,3 +1,4 @@
 #include "common.h"
 
-int calcMulls( const string& input );
+int calcMullsAll( const string& input );
+int calcMullsEnables( const string& input );
