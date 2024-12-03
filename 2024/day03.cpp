@@ -150,39 +150,39 @@ int calcMulls( const string& corrupted, bool use_enables )
     auto   num1 = g.add_node<capture_num>();
     auto   num2 = g.add_node<capture_num>();
     auto  comma = g.add_node<match_keyword>(",");
-
     auto cparen = g.add_node<match_keyword>(")",[&num1,&num2,&total](){
         int a = num1->get_capture();
         int b = num2->get_capture();
         total += a * b;
     });
     
-    auto _do = g.add_node<match_keyword>("do()", [&kw_mul](){
-        kw_mul->enable();
-    });
-
-    auto nt = g.add_node<match_keyword>("n't()", [&kw_mul](){
-        kw_mul->disable();
-    });
-
     // create graph edges
     g.add_edge( g.head, kw_mul );   // mul()
+    g.add_edge( kw_mul, num1 );     // mul(25
+    g.add_edge( num1, comma );      // mul(25,
+    g.add_edge( comma, num2 );      // mul(25,48
+    g.add_edge( num2, cparen );     // mul(25,48)
 
+    // if supporting do/don't, add couple more nodes/edges
     if( use_enables )
     {
+        auto _do = g.add_node<match_keyword>("do()", [&kw_mul](){
+            kw_mul->enable();
+        });
+
+        auto nt = g.add_node<match_keyword>("n't()", [&kw_mul](){
+            kw_mul->disable();
+        });
+
         g.add_edge( g.head, _do );  // do()
         g.add_edge( _do, nt );      // don't()
     }
 
-    g.add_edge( kw_mul, num1 ); // mul(25
-    g.add_edge( num1, comma );  // mul(25,
-    g.add_edge( comma, num2 );  // mul(25,48
-    g.add_edge( num2, cparen ); // mul(25,48)
-
-    // match input
+    // visit the graph with each character
     match_node* current = g.head.get();
     for( auto c : corrupted )
     {
+        // find next match
         while( !current->match(c) ){
             current = current->find_edge(c);
 
@@ -192,11 +192,8 @@ int calcMulls( const string& corrupted, bool use_enables )
             }
         }
 
+        // consume it
         current->consume( c );
-
-        // if we're going back to the start, reset any captured numbers
-        if( current == g.head.get() )
-            g.reset();
     }
 
     return total;
