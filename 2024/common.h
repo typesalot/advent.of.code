@@ -21,6 +21,8 @@
 #include <utility>
 #include <cctype>
 
+#include <optional>
+
 using namespace std;
 
 #include <gtest/gtest.h>

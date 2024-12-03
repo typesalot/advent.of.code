@@ -15,23 +15,22 @@ class graph;
 class match_node
 {
 public:
-    match_node() = default;
     virtual ~match_node() = default;
 
     virtual bool match( char v ){
-        return find_edge(v) == nullptr;
+        return find_edge(v) == std::nullopt;
     }
 
     virtual void consume( char v ){};
     virtual void reset(){};
     virtual bool is_enabled(){ return true; }
 
-    match_node* find_edge( char v )
+    optional<shared_ptr<match_node>> find_edge( char v )
     {
-        for( const auto& edge : edges )
+        for( auto& edge : edges )
             if( edge->is_enabled() && edge->match(v) )
-                return edge.get();
-        return nullptr;
+                return edge;
+        return std::nullopt;
     }
 
 private:
@@ -44,31 +43,29 @@ class match_keyword : public match_node
 private:
     bool enabled = true;
     string keyword;
-    int pos = 0;
+    string::iterator itr;
     std::function<void(void)> oncomplete;
 
 public:
-    match_keyword( const string& kw ) : keyword( kw ), oncomplete( [](){} ){};
-    match_keyword( const string& kw, decltype(oncomplete) cb ) : keyword( kw ), oncomplete( cb ){};
-    ~match_keyword() = default;
+    match_keyword( const string& kw )
+        : keyword( kw ), oncomplete( [](){} ), itr(keyword.begin()){};
+    match_keyword( const string& kw, decltype(oncomplete) cb )
+        : keyword( kw ), oncomplete( cb ), itr(keyword.begin()){};
 
     bool match( char v ) override
     {
-        if( pos < keyword.length() && 
-            keyword[pos] == v )
-            return true;
-        return false;
+        return *itr == v;
     }
 
     void consume( char v ) override
     {
-        pos++;
-        if( pos == keyword.length() )
+        itr++;
+        if( itr == keyword.end() )
             oncomplete();
     }
 
     virtual void reset() override {
-        pos = 0;
+        itr = keyword.begin();
     }
 
     bool is_enabled() override{
@@ -86,12 +83,10 @@ public:
 
 class capture_num : public match_node
 {
-public:
+private:
     int num = 0;
 
-    capture_num() = default;
-    ~capture_num() = default;
-
+public:
     bool match( char v ) override {
         return isdigit(v);
     }
@@ -112,10 +107,15 @@ public:
 
 class graph
 {
-public:
-    shared_ptr<match_node>  head = nullptr;
-
+private:
+    shared_ptr<match_node>              _head = nullptr;
     std::vector<shared_ptr<match_node>> nodes;
+
+public:
+    graph()
+    {
+        _head = add_node<match_node>();
+    }
 
     template<typename T, typename ... ArgsT>
     auto add_node( ArgsT&&... args ) -> shared_ptr<T>
@@ -131,6 +131,11 @@ public:
         from->edges.emplace_back( to );
     }
 
+    auto head() -> decltype(_head)&
+    {
+        return _head;
+    }
+
     void reset()
     {
         for( auto& node : nodes )
@@ -144,7 +149,6 @@ int calcMulls( const string& corrupted, bool use_enables )
 
     // create graph
     graph g;
-    g.head = g.add_node<match_node>();
 
     auto kw_mul = g.add_node<match_keyword>("mul(");
     auto   num1 = g.add_node<capture_num>();
@@ -157,7 +161,7 @@ int calcMulls( const string& corrupted, bool use_enables )
     });
     
     // create graph edges
-    g.add_edge( g.head, kw_mul );   // mul()
+    g.add_edge( g.head(), kw_mul ); // mul(
     g.add_edge( kw_mul, num1 );     // mul(25
     g.add_edge( num1, comma );      // mul(25,
     g.add_edge( comma, num2 );      // mul(25,48
@@ -174,20 +178,22 @@ int calcMulls( const string& corrupted, bool use_enables )
             kw_mul->disable();
         });
 
-        g.add_edge( g.head, _do );  // do()
+        g.add_edge( g.head(), _do );  // do()
         g.add_edge( _do, nt );      // don't()
     }
 
     // visit the graph with each character
-    match_node* current = g.head.get();
+    auto current = g.head();
     for( auto c : corrupted )
     {
         // find next match
         while( !current->match(c) ){
-            current = current->find_edge(c);
-
-            if( current == nullptr ){
-                current = g.head.get();
+            auto edge = current->find_edge(c);
+            if( edge )
+                current = *edge;
+            else
+            {
+                current = g.head();
                 g.reset();
             }
         }
