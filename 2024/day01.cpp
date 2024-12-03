@@ -1,4 +1,4 @@
-#include "day01.h"
+#include "common.h"
 
 int calcListDistance( vector<int>& list1, vector<int>& list2 ) {
     int distance = 0;
@@ -72,4 +72,28 @@ void readInputLists(const string& fname, vector<int>& list1, vector<int>& list2)
         list1.push_back(stoi(parts[0]));
         list2.push_back(stoi(parts[1]));
     }
+}
+
+TEST(Day1,Part1)
+{
+    vector<int> list1;
+    vector<int> list2;
+    readInputLists("input/day01.txt", list1, list2);
+
+    int answer = calcListDistance(list1, list2);
+    EXPECT_EQ( answer, 1320851 );
+    cout << "Answer = " << answer << endl;
+}
+
+TEST(Day1,Part2)
+{
+    vector<int> list1;
+    vector<int> list2;
+    readInputLists("input/day01.txt", list1, list2);
+
+    int answer1 = calcListSimilarity1(list1,list2);
+    int answer2 = calcListSimilarity2(list1,list2);
+    EXPECT_EQ( answer1, 26859182 );
+    EXPECT_EQ( answer2, 26859182 );
+    cout << "Answer = " << answer1 << endl;
 }

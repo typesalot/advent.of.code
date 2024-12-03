@@ -1,4 +1,0 @@
-#include "common.h"
-
-int numSafeReports( const string& input );
-int numSafeReportsWithTolerance( const string& input );

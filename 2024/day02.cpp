@@ -1,4 +1,4 @@
-#include "day02.h"
+#include "common.h"
 
 int _numSafeReportsWithTolerance( const vector<vector<int>>& reports );
 
@@ -120,7 +120,7 @@ int _numSafeReportsWithTolerance( const vector<vector<int>>& reports )
     return safe;
 }
 
-TEST(numSafeReportsWithTolerance,Examples)
+TEST(Day2,Examples)
 {
     EXPECT_EQ( _numSafeReportsWithTolerance( {{7,6,4,2,1}} ), 1 ); // Safe without removing any level.
     EXPECT_EQ( _numSafeReportsWithTolerance( {{1,2,7,8,9}} ), 0 ); // Unsafe regardless of which level is removed.
@@ -128,11 +128,21 @@ TEST(numSafeReportsWithTolerance,Examples)
     EXPECT_EQ( _numSafeReportsWithTolerance( {{1,3,2,4,5}}), 1);   // Safe by removing the second level, 3.
     EXPECT_EQ( _numSafeReportsWithTolerance( {{8,6,4,4,1}}), 1);   // Safe by removing the third level, 4.
     EXPECT_EQ( _numSafeReportsWithTolerance( {{1,3,6,7,9}}), 1);   // Safe without removing any level.
-}
-
-TEST(numSafeReportsWithTolerance,Cases)
-{
     EXPECT_EQ( _numSafeReportsWithTolerance( {{49,52,55,57,58,60,65}} ), 1 );
     EXPECT_EQ( _numSafeReportsWithTolerance( {{81,85,88,89,91,93}}), 1 );
     EXPECT_EQ( _numSafeReportsWithTolerance( {{47, 50, 48, 45, 42, 39, 38}}), 1); // Removing the first element makes safe gradient
+}
+
+TEST(Day2,Part1)
+{
+    int answer = numSafeReports("input/day02.txt");
+    EXPECT_EQ( answer, 220 );
+    cout << "Answer = " << answer << endl;
+}
+
+TEST(Day2,Part2)
+{
+    int answer = numSafeReportsWithTolerance("input/day02.txt");
+    EXPECT_EQ( answer, 296 );
+    cout << "Answer = " << answer << endl;
 }

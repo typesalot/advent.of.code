@@ -1,4 +1,4 @@
-#include "day03.h"
+#include "common.h"
 
 int _calcMulls( const string& corrupted, bool use_enables );
 
