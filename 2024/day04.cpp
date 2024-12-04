@@ -135,7 +135,28 @@ int countXmas(const vector<string> &input)
     return total;
 }
 
-TEST(Day4, Example)
+int countCrossMas(const vector<string>& input)
+{
+    int cnt = 0;
+    for (int j = 1; j < input.size() - 1; j++)
+        for (int i = 1; i < input[0].length() - 1; i++)
+            if (input[j][i] == 'A')
+            {
+                bool forward_mas = 
+                      // --                           ++
+                    ( input[j-1][i-1] == 'M' && input[j+1][i+1] == 'S' ) ||
+                    ( input[j-1][i-1] == 'S' && input[j+1][i+1] == 'M' );
+                bool back_mas = 
+                    // +-                           -+
+                    ( input[j+1][i-1] == 'M' && input[j-1][i+1] == 'S' ) ||
+                    ( input[j+1][i-1] == 'S' && input[j-1][i+1] == 'M' );
+                if( forward_mas && back_mas )
+                    cnt++;
+            }
+    return cnt;
+}
+
+TEST(Day4, Part1Examples)
 {
     vector<string> input = {
       // 0123456789
@@ -162,11 +183,39 @@ TEST(Day4, Example)
     EXPECT_EQ(countXmas(input), 18);
 }
 
+TEST(Day4, Part2Examples)
+{
+    vector<string> input = {
+      // 0123456789
+        "MMMSXXMASM", // 0
+        "MSAMXMSMSA", // 1
+        "AMXSXMAAMM", // 2
+        "MSAMASMSMX", // 3
+        "XMASAMXAMM", // 4
+        "XXAMMXXAMA", // 5
+        "SMSMSASXSS", // 6
+        "SAXAMASAAA", // 7
+        "MAMMMXMMMM", // 8
+        "MXMXAXMASX"  // 9
+    };
+
+    EXPECT_EQ(countCrossMas(input), 9);
+}
+
 TEST(Day4, Part1)
 {
     vector<string> input;
     readInput("input/day04.txt",input);
     int answer = countXmas(input);
     EXPECT_EQ(answer, 2370);
+    cout << "Answer = " << answer << endl;
+}
+
+TEST(Day4, Part2)
+{
+    vector<string> input;
+    readInput("input/day04.txt",input);
+    int answer = countCrossMas(input);
+    EXPECT_EQ(answer, 1908);
     cout << "Answer = " << answer << endl;
 }
