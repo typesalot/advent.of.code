@@ -1,0 +1,117 @@
+# See: https://clang.llvm.org/docs/ClangFormatStyleOptions.html
+# Template
+BasedOnStyle: LLVM
+
+# Indent & Tabs
+IndentWidth: 2
+UseTab: Never
+
+# Constraints
+ColumnLimit: 120
+
+# Pointer & Reference Alignment
+DerivePointerAlignment: false
+PointerAlignment: Left
+QualifierAlignment: Left
+ReferenceAlignment: Left
+
+# Alignments
+AlignConsecutiveAssignments:
+  Enabled: true
+  AcrossEmptyLines: false
+  AcrossComments: false
+
+AlignFunctionDeclarations:
+  Enabled: true
+  AcrossEmptyLines: false
+
+AlignConsecutiveDeclarations:
+  Enabled: true
+  AcrossEmptyLines: false
+
+AlignConsecutiveBitFields:
+  Enabled: true
+  AcrossEmptyLines: true
+  AcrossComments: false
+
+AlignConsecutiveMacros:
+  Enabled: true
+  AcrossEmptyLines: false
+
+AlignEscapedNewlines: LeftWithLastLine
+AlignOperands: true
+
+AlignTrailingComments:
+  Kind: Always
+  OverEmptyLines: 2
+
+# Break Options
+BreakBeforeBinaryOperators: None
+BreakBeforeTernaryOperators: true
+BreakBinaryOperations: All
+BreakConstructorInitializers: BeforeComma
+BreakInheritanceList: BeforeComma
+BreakFunctionDefinitionParameters: false
+BreakTemplateDeclarations: Yes
+
+# Penalties
+PenaltyBreakString: 0       # Don't break long strings
+
+# Short-Line Restrictions
+AllowShortBlocksOnASingleLine: false
+AllowShortCaseExpressionOnASingleLine: false
+AllowShortCaseLabelsOnASingleLine: false
+AllowShortEnumsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: false
+AllowShortIfStatementsOnASingleLine: false
+AllowShortLambdasOnASingleLine: true
+AllowShortLoopsOnASingleLine: false
+
+# Packing
+AllowAllArgumentsOnNextLine: false
+AllowAllParametersOfDeclarationOnNextLine: false
+BinPackArguments: false
+BinPackParameters: true
+
+# Spacing
+BitFieldColonSpacing: Both
+
+# Classes:
+EmptyLineAfterAccessModifier: Never
+EmptyLineBeforeAccessModifier: Always
+IndentAccessModifiers: true
+PackConstructorInitializers: NextLine
+
+# Lambdas
+LambdaBodyIndentation: OuterScope
+
+# Lines
+MaxEmptyLinesToKeep: 1
+KeepEmptyLines:
+  AtEndOfFile: false
+  AtStartOfBlock: false
+  AtStartOfFile: false
+SeparateDefinitionBlocks: Always
+
+# Namespaces
+FixNamespaceComments: true
+CompactNamespaces: true
+
+# Includes:
+IncludeBlocks: Regroup
+SortIncludes: CaseSensitive
+
+# Spacing:
+SpaceAfterLogicalNot: false
+SpaceAfterTemplateKeyword: true
+SpaceBeforeAssignmentOperators: true
+SpaceBeforeCaseColon: false
+SpaceBeforeCtorInitializerColon: true
+SpaceBeforeInheritanceColon: true
+SpaceInEmptyBlock: false
+SpacesBeforeTrailingComments: 2
+SpacesInAngles: false
+
+# Misc
+QualifierOrder: [inline, static, type, const, volatile]
+SortUsingDeclarations: LexicographicNumeric

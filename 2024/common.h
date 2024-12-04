@@ -1,27 +1,22 @@
-#include <vector>
+#include <algorithm>
+#include <cctype>
+#include <fstream>
+#include <functional>
+#include <iostream>
+#include <iterator>
+#include <list>
 #include <map>
+#include <memory>
+#include <numeric>
+#include <optional>
 #include <set>
+#include <sstream>
+#include <string>
+#include <string_view>
 #include <unordered_map>
 #include <unordered_set>
-#include <list>
-
-#include <string>
-#include <sstream>
-#include <string_view>
-
-#include <iostream>
-#include <fstream>
-
-#include <algorithm>
-#include <numeric>
-#include <functional>
-#include <iterator>
-
-#include <memory>
 #include <utility>
-#include <cctype>
-
-#include <optional>
+#include <vector>
 
 using namespace std;
 
