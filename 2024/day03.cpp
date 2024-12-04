@@ -157,8 +157,7 @@ int calcMulls(const string& corrupted, bool use_enables) {
   // if supporting do/don't, add couple more nodes/edges
   if (use_enables) {
     auto _do = g.add_node<match_keyword>("do()", [&kw_mul]() { kw_mul->enable(); });
-
-    auto nt = g.add_node<match_keyword>("n't()", [&kw_mul]() { kw_mul->disable(); });
+    auto nt  = g.add_node<match_keyword>("n't()", [&kw_mul]() { kw_mul->disable(); });
 
     g.add_edge(g.head(), _do);  // do()
     g.add_edge(_do, nt);        // don't()

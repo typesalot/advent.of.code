@@ -41,10 +41,6 @@ int countXmas(const vector<string>& input) {
   return cnt;
 }
 
-int foo(int a, int b) {
-  return 0;
-}
-
 int countCrossMas(const vector<string>& input) {
   int cnt = 0;
   for (int j = 1; j < input.size() - 1; j++)
