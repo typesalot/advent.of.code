@@ -119,13 +119,13 @@ TEST(Day2, Examples) {
 }
 
 TEST(Day2, Part1) {
-  int answer = numSafeReports("input/day02.txt");
+  int answer = numSafeReports(getInputFile(2024, 2));
   EXPECT_EQ(answer, 220);
   cout << "Answer = " << answer << endl;
 }
 
 TEST(Day2, Part2) {
-  int answer = numSafeReportsWithTolerance("input/day02.txt");
+  int answer = numSafeReportsWithTolerance(getInputFile(2024, 2));
   EXPECT_EQ(answer, 296);
   cout << "Answer = " << answer << endl;
 }

@@ -98,7 +98,7 @@ TEST(Day4, Part2Examples) {
 
 TEST(Day4, Part1) {
   vector<string> input;
-  readInput("input/day04.txt", input);
+  readInput(getInputFile(2024, 4), input);
   int answer = countXmas(input);
   EXPECT_EQ(answer, 2370);
   cout << "Answer = " << answer << endl;
@@ -106,7 +106,7 @@ TEST(Day4, Part1) {
 
 TEST(Day4, Part2) {
   vector<string> input;
-  readInput("input/day04.txt", input);
+  readInput(getInputFile(2024, 4), input);
   int answer = countCrossMas(input);
   EXPECT_EQ(answer, 1908);
   cout << "Answer = " << answer << endl;

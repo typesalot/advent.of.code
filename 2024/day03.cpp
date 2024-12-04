@@ -197,14 +197,14 @@ TEST(Day3, Part2Examples) {
 }
 
 TEST(Day3, Part1) {
-  string s   = readInput("input/day03.txt");
+  string s   = readInput(getInputFile(2024, 3));
   int    ans = calcMulls(s, false);
   EXPECT_EQ(ans, 192767529);
   cout << "Answer = " << ans << endl;
 }
 
 TEST(Day3, Part2) {
-  string s   = readInput("input/day03.txt");
+  string s   = readInput(getInputFile(2024, 3));
   int    ans = calcMulls(s, true);
   EXPECT_EQ(ans, 104083373);
   cout << "Answer = " << ans << endl;

@@ -70,7 +70,7 @@ void readInputLists(const string& fname, vector<int>& list1, vector<int>& list2)
 TEST(Day1, Part1) {
   vector<int> list1;
   vector<int> list2;
-  readInputLists("input/day01.txt", list1, list2);
+  readInputLists(getInputFile(2024, 1), list1, list2);
 
   int answer = calcListDistance(list1, list2);
   EXPECT_EQ(answer, 1320851);
@@ -80,7 +80,7 @@ TEST(Day1, Part1) {
 TEST(Day1, Part2) {
   vector<int> list1;
   vector<int> list2;
-  readInputLists("input/day01.txt", list1, list2);
+  readInputLists(getInputFile(2024, 1), list1, list2);
 
   int answer1 = calcListSimilarity1(list1, list2);
   int answer2 = calcListSimilarity2(list1, list2);

@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <cctype>
+#include <filesystem>
 #include <fstream>
 #include <functional>
 #include <iostream>
@@ -22,4 +23,11 @@ using namespace std;
 
 #include <gtest/gtest.h>
 
+string         getInputFile(int year, int day);
 vector<string> split(const string& s, char delimiter);
+
+struct config {
+    string input_path;
+};
+
+extern config g_config;
