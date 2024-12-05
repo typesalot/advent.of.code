@@ -81,11 +81,35 @@ int fixUpdate(updates_t::value_type& update, rules_t& rules) {
   return (!correct) ? update[update.size() / 2] : 0;
 }
 
+int fixUpdate2(updates_t::value_type& update, rules_t& rules) {
+  bool correct = true;
+
+  auto is_valid_order = [&rules](int from, int to) -> bool {
+    const auto& rule = rules[from];
+    auto        res  = std::find(rule.begin(), rule.end(), to);
+    return res != rule.end();
+  };
+
+  int from = -1;
+  for (auto to : update) {
+    if (from != -1)
+      correct = is_valid_order(from, to);
+    if (!correct)
+      break;
+    from = to;
+  }
+
+  if (!correct)
+    std::sort(update.begin(), update.end(), is_valid_order);
+
+  return (!correct) ? update[update.size() / 2] : 0;
+}
+
 int calcUpdates(rules_t& rules, updates_t& updates, bool fix) {
   int total = 0;
 
   for (auto& update : updates)
-    total += (fix) ? fixUpdate(update, rules) : checkUpdate(update, rules);
+    total += (fix) ? fixUpdate2(update, rules) : checkUpdate(update, rules);
 
   return total;
 }
