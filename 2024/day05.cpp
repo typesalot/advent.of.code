@@ -61,21 +61,19 @@ int fixUpdate(updates_t::value_type& update, rules_t& rules) {
     return res != rule.end();
   };
 
-  int jump = 0;
+  int jump = 1;
   for (int i = 1; i < update.size();) {
     int from = update[i - 1];
     int to   = update[i];
     if (!is_valid_order(from, to)) {
-      jump    = i;
+      jump    = max(jump, i);
       correct = false;
       swap(update[i], update[i - 1]);
       if (i > 1)
         i--;
     } else {
-      if (jump) {
-        i    = jump;
-        jump = 0;
-      }
+      if (i < jump)
+        i = jump;
       i++;
     }
   }
