@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <cctype>
+#include <chrono>
 #include <filesystem>
 #include <fstream>
 #include <functional>
@@ -31,3 +32,20 @@ struct config {
 };
 
 extern config g_config;
+
+class timer {
+  public:
+    timer();
+    ~timer();
+
+    void start();
+    void stop();
+    int  ms() const;
+
+  private:
+    chrono::time_point<chrono::high_resolution_clock> _start;
+    chrono::time_point<chrono::high_resolution_clock> _stop;
+    bool                                              stopped = false;
+};
+
+std::ostream& operator<<(std::ostream& os, const timer& timer);

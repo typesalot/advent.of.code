@@ -23,3 +23,37 @@ string getInputFile(int year, int day) {
     throw runtime_error(format("File Not Found! {}", asset_path.string()));
   return asset_path;
 }
+
+timer::timer() {
+  start();
+}
+
+timer::~timer() {
+  stop();
+}
+
+void timer::start() {
+  _start = chrono::high_resolution_clock::now();
+  _stop  = chrono::high_resolution_clock::now();
+}
+
+void timer::stop() {
+  if (!stopped) {
+    _stop   = chrono::high_resolution_clock::now();
+    stopped = true;
+  }
+}
+
+int timer::ms() const {
+  auto start = chrono::time_point_cast<chrono::milliseconds>(_start).time_since_epoch().count();
+  auto end   = (stopped) ? chrono::time_point_cast<chrono::milliseconds>(_stop).time_since_epoch().count()
+                         : chrono::time_point_cast<chrono::milliseconds>(chrono::high_resolution_clock::now())
+                             .time_since_epoch()
+                             .count();
+  return end - start;
+}
+
+std::ostream& operator<<(std::ostream& os, const timer& _timer) {
+  os << _timer.ms();
+  return os;
+}
