@@ -38,9 +38,11 @@ class timer {
     timer();
     ~timer();
 
-    void start();
-    void stop();
-    int  ms() const;
+    virtual void start();
+    void         stop();
+    int          ms() const;
+
+    friend ostream& operator<<(ostream& os, const timer& timer);
 
   private:
     chrono::time_point<chrono::high_resolution_clock> _start;
@@ -48,4 +50,15 @@ class timer {
     bool                                              stopped = false;
 };
 
-std::ostream& operator<<(std::ostream& os, const timer& timer);
+class timer_f : public timer {
+  public:
+    timer_f(const string& prefix, const function<void()>& f);
+    ~timer_f();
+
+  private:
+    function<void()> f;
+    string           prefix;
+
+    static vector<pair<string, int>> pump;
+    static int                       ref_cnt;
+};

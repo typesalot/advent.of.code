@@ -53,7 +53,36 @@ int timer::ms() const {
   return end - start;
 }
 
-std::ostream& operator<<(std::ostream& os, const timer& _timer) {
+ostream& operator<<(ostream& os, const timer& _timer) {
   os << _timer.ms();
   return os;
+}
+
+decltype(timer_f::pump)    timer_f::pump;
+decltype(timer_f::ref_cnt) timer_f::ref_cnt = 0;
+
+timer_f::timer_f(const string& pmsg, const function<void()>& _f) : prefix(pmsg), f(_f) {
+  timer_f::ref_cnt++;
+  timer::start();
+  f();
+  timer::stop();
+}
+
+timer_f::~timer_f() {
+  pump.emplace_back(this->prefix, this->ms());
+
+  timer_f::ref_cnt--;
+
+  int indent = 2;
+
+  if (timer_f::ref_cnt == 0 && timer_f::pump.size()) {
+    int max_s = 0;
+    int max_v = 0;
+    for (const auto& [s, v] : pump) {
+      max_s = max<int>(max_s, s.size());
+      max_v = max<int>(max_v, format("{}", v).length());
+    }
+    for (const auto& [s, v] : pump)
+      cout << format("{:>{}} = {:<{}} ms", s, max_s + indent, v, max_v) << endl;
+  }
 }
