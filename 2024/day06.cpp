@@ -9,15 +9,44 @@ vector<string> readInput() {
   return input;
 }
 
+enum direction {
+  NORTH,
+  EAST,
+  SOUTH,
+  WEST
+};
+
+struct coord {
+    coord() = default;
+    coord(int _x, int _y) : x(_x), y(_y) {};
+    int x = 0;
+    int y = 0;
+};
+
+struct segment {
+    segment(coord _s, coord _e) : start(_s), end(_e) {
+    }
+
+    coord start;
+    coord end;
+};
+
+struct guard_t {
+    coord     pos;
+    direction d;
+
+    direction next() {
+      const array<direction, 4> lookup = {EAST, SOUTH, WEST, NORTH};
+      return lookup[d];
+    }
+
+    void rotate() {
+      d = next();
+    }
+} guard;
+
 int calcDistinctPositions(vector<string>& field, bool debug) {
   int changes = 0;
-
-  enum direction {
-    NORTH,
-    EAST,
-    SOUTH,
-    WEST
-  };
 
   unordered_map<direction, string> direction_strings = {
       {NORTH, "NORTH"},
@@ -26,52 +55,22 @@ int calcDistinctPositions(vector<string>& field, bool debug) {
       {WEST, "WEST"},
   };
 
-  struct coord {
-      coord() = default;
-      coord(int _x, int _y) : x(_x), y(_y) {};
-      int x = 0;
-      int y = 0;
-  };
+  unordered_map<int, vector<int>> obs_x;    // for a given x, all the onstructions along y, verticles
+  unordered_map<int, vector<int>> obs_y;    // for a given y, all the obstructions along x, horizontals
+  array<vector<segment>, 4>       history;  // decision history for each turn
 
-  struct {
-      coord     pos;
-      direction d;
-      bool      on_field;
-
-      void rotate() {
-        switch (d) {
-        case NORTH:
-          d = EAST;
-          break;
-        case EAST:
-          d = SOUTH;
-          break;
-        case SOUTH:
-          d = WEST;
-          break;
-        case WEST:
-          d = NORTH;
-          break;
-        }
-      }
-  } guard;
-
-  unordered_map<int, vector<int>> obs_x;  // for a given x, all the onstructions along y, verticles
-  unordered_map<int, vector<int>> obs_y;  // for a given y, all the obstructions along x, horizontals
+  bool on_field = true;
 
   // fill in obstruction lookup
-  timer_f("fill obstruction maps", [&]() -> void {
-    for (int y = 0; y < field.size(); y++)
-      for (int x = 0; x < field[0].size(); x++)
-        if (field[y][x] == '#') {
-          obs_x[y].push_back(x);
-          obs_y[x].push_back(y);
-        } else if (field[y][x] == '^') {
-          guard.pos      = {x, y};
-          guard.d        = NORTH;
-          guard.on_field = true;
-        }
-  });
+  for (int y = 0; y < field.size(); y++)
+    for (int x = 0; x < field[0].size(); x++)
+      if (field[y][x] == '#') {
+        obs_x[y].push_back(x);
+        obs_y[x].push_back(y);
+      } else if (field[y][x] == '^') {
+        guard.pos = {x, y};
+        guard.d   = NORTH;
+      }
 
   auto update_distinct_path = [&field](const coord& p1, const coord& p2) -> int {
     int changes = 0;
@@ -92,18 +91,20 @@ int calcDistinctPositions(vector<string>& field, bool debug) {
     return changes;
   };
 
-  while (guard.on_field) {
+  while (on_field) {
+    coord new_pos = guard.pos;
+
     // north
     if (guard.d == NORTH) {
       auto& obs = obs_y[guard.pos.x];
       auto  res = find_if(obs.rbegin(), obs.rend(), [gy = guard.pos.y](int fy) -> bool { return fy < gy; });
       int   y   = -1;
       if (res == obs.rend())
-        guard.on_field = false;
+        on_field = false;
       else
-        y = *res;
+        y = *res + 1;
       changes += update_distinct_path(guard.pos, coord{guard.pos.x, y});
-      guard.pos.y = y + 1;
+      new_pos.y = y;
     }
     // east
     else if (guard.d == EAST) {
@@ -111,11 +112,11 @@ int calcDistinctPositions(vector<string>& field, bool debug) {
       auto  res = find_if(obs.begin(), obs.end(), [gx = guard.pos.x](int fx) -> bool { return fx > gx; });
       int   x   = field[0].length();
       if (res == obs.end())
-        guard.on_field = false;
+        on_field = false;
       else
-        x = *res;
+        x = *res - 1;
       changes += update_distinct_path(guard.pos, coord{x, guard.pos.y});
-      guard.pos.x = x - 1;
+      new_pos.x = x;
     }
     // south
     else if (guard.d == SOUTH) {
@@ -123,24 +124,33 @@ int calcDistinctPositions(vector<string>& field, bool debug) {
       auto  res = find_if(obs.begin(), obs.end(), [gy = guard.pos.y](int fy) -> bool { return fy > gy; });
       int   y   = field.size();
       if (res == obs.end())
-        guard.on_field = false;
+        on_field = false;
       else
-        y = *res;
+        y = *res - 1;
       changes += update_distinct_path(guard.pos, coord{guard.pos.x, y});
-      guard.pos.y = y - 1;
+      new_pos.y = y;
     }
     // west
     else if (guard.d == WEST) {
-      auto& obs = obs_x[guard.pos.y];
-      auto  res = find_if(obs.rbegin(), obs.rend(), [gx = guard.pos.x](int fx) -> bool { return fx < gx; });
-      int   x   = -1;
+      auto& obs   = obs_x[guard.pos.y];
+      auto  res   = find_if(obs.rbegin(), obs.rend(), [gx = guard.pos.x](int fx) -> bool { return fx < gx; });
+      int   dst_x = -1;
       if (res == obs.rend())
-        guard.on_field = false;
-      else
-        x = *res;
-      changes += update_distinct_path(guard.pos, coord{x, guard.pos.y});
-      guard.pos.x = x + 1;
+        on_field = false;
+      else {
+        dst_x = *res + 1;
+
+        auto& cardinal_history = history[guard.next()];
+        for (auto& previous : cardinal_history) {
+        }
+      }
+      changes += update_distinct_path(guard.pos, coord{dst_x, guard.pos.y});
+      new_pos.x = dst_x;
     }
+
+    // save guard history and then rotate
+    history[guard.d].emplace_back(guard.pos, new_pos);
+    guard.pos = new_pos;
     guard.rotate();
 
     if (debug) {
@@ -155,7 +165,6 @@ int calcDistinctPositions(vector<string>& field, bool debug) {
 }
 
 TEST(Day6, Part1Example) {
-  return;
   vector<string> field = {
       // clang-format off
      //0123456789
@@ -165,8 +174,8 @@ TEST(Day6, Part1Example) {
       "..#.......", // 3
       ".......#..", // 4
       "..........", // 5
-      ".#..^.....", // 6
-      "........#.", // 7
+      ".#........", // 6
+      "....^...#.", // 7
       "#.........", // 8
       "......#...", // 9
       // clang-format on
@@ -179,6 +188,7 @@ TEST(Day6, Part1Example) {
 }
 
 TEST(Day6, Part1) {
+  return;
   vector<string> field = readInput();
 
   int ans = calcDistinctPositions(field, false);
