@@ -16,11 +16,18 @@ enum direction {
   WEST
 };
 
+unordered_map<direction, string> direction_strings = {
+    {NORTH, "NORTH"},
+    {EAST, "EAST"},
+    {SOUTH, "SOUTH"},
+    {WEST, "WEST"},
+};
+
 struct coord {
     coord() = default;
     coord(int _x, int _y) : x(_x), y(_y) {};
-    int x = 0;
     int y = 0;
+    int x = 0;
 };
 
 struct segment {
@@ -30,6 +37,47 @@ struct segment {
     coord start;
     coord end;
 };
+
+int orient(const coord& a, const coord& b, const coord& c) {
+  return ((b.y - a.y) * (c.x - b.x)) - ((b.x - a.x) * (c.y - b.y));
+}
+
+bool intersect(segment& s1, segment& s2) {
+  bool result = false;
+
+  std::array<int, 4> o;
+
+  auto check = [&](int i, coord& p1, coord& p2, coord& p3) -> bool {
+    o[i] = orient(p1, p2, p3);
+    if (o[i] == 0)
+      return (min(p1.x, p2.x) <= p3.x && p3.x <= max(p1.x, p2.x)) &&
+             (min(p1.y, p2.y) <= p3.y && p3.y <= max(p1.y, p2.y));
+    return false;
+  };
+  result = check(0, s1.start, s1.end, s2.start);
+  if (result)
+    return true;
+
+  result = check(1, s1.start, s1.end, s2.end);
+  if (result)
+    return true;
+  else if (o[0] * o[1] >= 0) {
+    return false;
+  }
+
+  result = check(2, s2.start, s2.end, s1.start);
+  if (result)
+    return true;
+
+  result = check(3, s2.start, s2.end, s1.end);
+  if (result)
+    return true;
+  else if (o[2] * o[3] >= 0) {
+    return false;
+  }
+
+  return true;
+}
 
 struct guard_t {
     coord     pos;
@@ -47,13 +95,7 @@ struct guard_t {
 
 int calcDistinctPositions(vector<string>& field, bool debug) {
   int changes = 0;
-
-  unordered_map<direction, string> direction_strings = {
-      {NORTH, "NORTH"},
-      {EAST, "EAST"},
-      {SOUTH, "SOUTH"},
-      {WEST, "WEST"},
-  };
+  int cycles  = 0;
 
   unordered_map<int, vector<int>> obs_x;    // for a given x, all the onstructions along y, verticles
   unordered_map<int, vector<int>> obs_y;    // for a given y, all the obstructions along x, horizontals
@@ -139,17 +181,19 @@ int calcDistinctPositions(vector<string>& field, bool debug) {
         on_field = false;
       else {
         dst_x = *res + 1;
-
-        auto& cardinal_history = history[guard.next()];
-        for (auto& previous : cardinal_history) {
-        }
       }
       changes += update_distinct_path(guard.pos, coord{dst_x, guard.pos.y});
       new_pos.x = dst_x;
     }
 
+    segment path     = {guard.pos, new_pos};
+    auto&   segments = history[guard.next()];
+    for (auto& segment : segments)
+      if (intersect(path, segment))
+        cycles++;
+
     // save guard history and then rotate
-    history[guard.d].emplace_back(guard.pos, new_pos);
+    history[guard.d].emplace_back(path);
     guard.pos = new_pos;
     guard.rotate();
 
@@ -174,8 +218,8 @@ TEST(Day6, Part1Example) {
       "..#.......", // 3
       ".......#..", // 4
       "..........", // 5
-      ".#........", // 6
-      "....^...#.", // 7
+      ".#..^.....", // 6
+      "........#.", // 7
       "#.........", // 8
       "......#...", // 9
       // clang-format on
