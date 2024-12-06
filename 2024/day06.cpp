@@ -97,7 +97,7 @@ int calcDistinctPositions(vector<string>& field, bool debug) {
   int changes = 0;
   int cycles  = 0;
 
-  unordered_map<int, vector<int>> obs_x;    // for a given x, all the onstructions along y, verticles
+  unordered_map<int, vector<int>> obs_x;    // for a given x, all the obstructions along y, verticles
   unordered_map<int, vector<int>> obs_y;    // for a given y, all the obstructions along x, horizontals
   array<vector<segment>, 4>       history;  // decision history for each turn
 
@@ -133,64 +133,73 @@ int calcDistinctPositions(vector<string>& field, bool debug) {
     return changes;
   };
 
+  auto find_obstruction = [&](coord& pos, direction d) -> tuple<coord, bool> {
+    coord result           = pos;
+    bool  found            = false;
+    bool  is_verticle      = (d == NORTH || d == SOUTH);
+    auto& obstructions_map = (is_verticle) ? obs_y : obs_x;
+    auto& obs              = (is_verticle) ? obstructions_map[pos.x] : obstructions_map[pos.y];
+
+    switch (d) {
+    case NORTH: {
+      auto res = find_if(obs.rbegin(), obs.rend(), [gy = pos.y](int fy) -> bool { return fy < gy; });
+      found    = res != obs.rend();
+      result.y = (found) ? *res : -1;
+    } break;
+    case EAST: {
+      auto res = find_if(obs.begin(), obs.end(), [gx = pos.x](int fx) -> bool { return fx > gx; });
+      found    = res != obs.end();
+      result.x = (found) ? *res : field[0].length();
+    } break;
+    case SOUTH: {
+      auto res = find_if(obs.begin(), obs.end(), [gy = pos.y](int fy) -> bool { return fy > gy; });
+      found    = res != obs.end();
+      result.y = (found) ? *res : field.size();
+    } break;
+    case WEST: {
+      auto res = find_if(obs.rbegin(), obs.rend(), [gx = pos.x](int fx) -> bool { return fx < gx; });
+      found    = res != obs.rend();
+      result.x = (found) ? *res : -1;
+    } break;
+    }
+    return {result, found};
+  };
+
   while (on_field) {
     coord new_pos = guard.pos;
+    coord obstacle;
 
     // north
     if (guard.d == NORTH) {
-      auto& obs = obs_y[guard.pos.x];
-      auto  res = find_if(obs.rbegin(), obs.rend(), [gy = guard.pos.y](int fy) -> bool { return fy < gy; });
-      int   y   = -1;
-      if (res == obs.rend())
-        on_field = false;
-      else
-        y = *res + 1;
-      changes += update_distinct_path(guard.pos, coord{guard.pos.x, y});
-      new_pos.y = y;
+      tie(obstacle, on_field) = find_obstruction(guard.pos, guard.d);
+      changes += update_distinct_path(guard.pos, coord{guard.pos.x, obstacle.y + 1});
+      new_pos.y = obstacle.y + 1;
     }
     // east
     else if (guard.d == EAST) {
-      auto& obs = obs_x[guard.pos.y];
-      auto  res = find_if(obs.begin(), obs.end(), [gx = guard.pos.x](int fx) -> bool { return fx > gx; });
-      int   x   = field[0].length();
-      if (res == obs.end())
-        on_field = false;
-      else
-        x = *res - 1;
-      changes += update_distinct_path(guard.pos, coord{x, guard.pos.y});
-      new_pos.x = x;
+      tie(obstacle, on_field) = find_obstruction(guard.pos, guard.d);
+      changes += update_distinct_path(guard.pos, coord{obstacle.x - 1, guard.pos.y});
+      new_pos.x = obstacle.x - 1;
     }
     // south
     else if (guard.d == SOUTH) {
-      auto& obs = obs_y[guard.pos.x];
-      auto  res = find_if(obs.begin(), obs.end(), [gy = guard.pos.y](int fy) -> bool { return fy > gy; });
-      int   y   = field.size();
-      if (res == obs.end())
-        on_field = false;
-      else
-        y = *res - 1;
-      changes += update_distinct_path(guard.pos, coord{guard.pos.x, y});
-      new_pos.y = y;
+      tie(obstacle, on_field) = find_obstruction(guard.pos, guard.d);
+      changes += update_distinct_path(guard.pos, coord{guard.pos.x, obstacle.y - 1});
+      new_pos.y = obstacle.y - 1;
     }
     // west
     else if (guard.d == WEST) {
-      auto& obs   = obs_x[guard.pos.y];
-      auto  res   = find_if(obs.rbegin(), obs.rend(), [gx = guard.pos.x](int fx) -> bool { return fx < gx; });
-      int   dst_x = -1;
-      if (res == obs.rend())
-        on_field = false;
-      else {
-        dst_x = *res + 1;
-      }
-      changes += update_distinct_path(guard.pos, coord{dst_x, guard.pos.y});
-      new_pos.x = dst_x;
+      tie(obstacle, on_field) = find_obstruction(guard.pos, guard.d);
+      changes += update_distinct_path(guard.pos, coord{obstacle.x + 1, guard.pos.y});
+      new_pos.x = obstacle.x + 1;
     }
 
     segment path     = {guard.pos, new_pos};
     auto&   segments = history[guard.next()];
-    for (auto& segment : segments)
+    for (auto& segment : segments) {
       if (intersect(path, segment))
         cycles++;
+    }
 
     // save guard history and then rotate
     history[guard.d].emplace_back(path);
@@ -232,7 +241,6 @@ TEST(Day6, Part1Example) {
 }
 
 TEST(Day6, Part1) {
-  return;
   vector<string> field = readInput();
 
   int ans = calcDistinctPositions(field, false);
