@@ -9,6 +9,13 @@ vector<string> readInput() {
   return input;
 }
 
+enum colors_t {
+  color_unvisited   = 37,  // white
+  color_obstruction = 93,  // bright yellow
+  color_guard       = 94,  // blue
+  color_visited     = 34,  // bright blue
+};
+
 enum direction {
   NORTH,
   EAST,
@@ -31,6 +38,8 @@ struct coord {
 };
 
 struct segment {
+    segment() = default;
+
     segment(coord _s, coord _e) : start(_s), end(_e) {
     }
 
@@ -83,8 +92,15 @@ struct guard_t {
     coord     pos;
     direction d;
 
+    // next direction if rotate 90deg cw
     direction next() {
       const array<direction, 4> lookup = {EAST, SOUTH, WEST, NORTH};
+      return lookup[d];
+    }
+
+    // direction facing opposite/mirror
+    direction mirror() {
+      const array<direction, 4> lookup = {SOUTH, WEST, NORTH, EAST};
       return lookup[d];
     }
 
@@ -93,9 +109,12 @@ struct guard_t {
     }
 } guard;
 
-int calcDistinctPositions(vector<string>& field, bool debug) {
+tuple<int, int> calcDistinctPositions(vector<string>& field, bool debug) {
   int changes = 0;
   int cycles  = 0;
+
+  vector<vector<int>> colors;
+  vector<coord>       planted;
 
   unordered_map<int, vector<int>> obs_x;    // for a given x, all the obstructions along y, verticles
   unordered_map<int, vector<int>> obs_y;    // for a given y, all the obstructions along x, horizontals
@@ -104,17 +123,44 @@ int calcDistinctPositions(vector<string>& field, bool debug) {
   bool on_field = true;
 
   // fill in obstruction lookup
-  for (int y = 0; y < field.size(); y++)
-    for (int x = 0; x < field[0].size(); x++)
+  for (int y = 0; y < field.size(); y++) {
+    auto& color = colors.emplace_back();
+    for (int x = 0; x < field[0].size(); x++) {
       if (field[y][x] == '#') {
         obs_x[y].push_back(x);
         obs_y[x].push_back(y);
+        color.emplace_back(color_obstruction);
       } else if (field[y][x] == '^') {
         guard.pos = {x, y};
         guard.d   = NORTH;
+        color.emplace_back(color_guard);
+      } else {
+        color.emplace_back(color_unvisited);
       }
+    }
+  }
 
-  auto update_distinct_path = [&field](const coord& p1, const coord& p2) -> int {
+  auto print_field = [&field, &colors, &debug]() -> void {
+    if (!debug)
+      return;
+    cout << endl << "  0123456789" << endl;
+    for (int j = 0; j < field.size(); j++) {
+      cout << "  ";
+      for (int i = 0; i < field[0].length(); i++) {
+        cout << "\033[";
+        if (guard.pos.y == j && guard.pos.x == i) {
+          cout << color_guard << ";" << 47;
+          cout << "m" << direction_strings[guard.d][0] << "\033[0m";
+        } else {
+          cout << colors[j][i];
+          cout << "m" << field[j][i] << "\033[0m";
+        }
+      }
+      cout << " " << j << endl;
+    }
+  };
+
+  auto update_distinct_path = [&field, &colors](const coord& p1, const coord& p2) -> int {
     int changes = 0;
 
     coord field_max = {(int)field[0].length() - 1, (int)field.size() - 1};
@@ -123,9 +169,11 @@ int calcDistinctPositions(vector<string>& field, bool debug) {
 
     for (int y = start.y; y <= end.y; y++)
       for (int x = start.x; x <= end.x; x++) {
-        char& c = field[y][x];
+        char& c     = field[y][x];
+        int&  color = colors[y][x];
         if (c == '.' || c == '^') {
-          c = 'X';
+          c     = 'X';
+          color = color_visited;
           changes++;
         }
       }
@@ -166,8 +214,10 @@ int calcDistinctPositions(vector<string>& field, bool debug) {
   };
 
   while (on_field) {
-    coord new_pos = guard.pos;
-    coord obstacle;
+    coord   new_pos = guard.pos;
+    coord   obstacle;
+    coord   obstacle_mirror;
+    segment path;
 
     // north
     if (guard.d == NORTH) {
@@ -194,27 +244,28 @@ int calcDistinctPositions(vector<string>& field, bool debug) {
       new_pos.x = obstacle.x + 1;
     }
 
-    segment path     = {guard.pos, new_pos};
-    auto&   segments = history[guard.next()];
+    path           = {guard.pos, new_pos};
+    auto& segments = history[guard.next()];
     for (auto& segment : segments) {
-      if (intersect(path, segment))
+      if (intersect(path, segment)) {
         cycles++;
+      }
     }
 
     // save guard history and then rotate
+    bool mirror_inbounds           = true;
+    tie(obstacle, mirror_inbounds) = find_obstruction(guard.pos, guard.mirror());
+    obstacle.x                     = min<int>(max(obstacle.x, 0), field[0].length() - 1);
+    obstacle.y                     = min<int>(max(obstacle.y, 0), field.size() - 1);
+    path                           = {obstacle, new_pos};
     history[guard.d].emplace_back(path);
     guard.pos = new_pos;
     guard.rotate();
 
-    if (debug) {
-      for (auto& s : field)
-        cout << format("  {}", s) << endl;
-      cout << format("  Guard @ y,x={},{} facing {}", guard.pos.y, guard.pos.x, direction_strings[guard.d]) << endl;
-      cout << endl;
-    }
+    print_field();
   }
 
-  return changes;
+  return {changes, cycles};
 }
 
 TEST(Day6, Part1Example) {
@@ -234,16 +285,20 @@ TEST(Day6, Part1Example) {
       // clang-format on
   };
 
-  int ans = calcDistinctPositions(field, true);
+  auto [changes, cycles] = calcDistinctPositions(field, true);
 
-  EXPECT_EQ(ans, 41);
-  cout << "Answer = " << ans << endl;
+  EXPECT_EQ(changes, 41);
+  EXPECT_EQ(cycles, 6);
+  cout << "Answer (changes) = " << changes << endl;
+  cout << "Answer (cycles)  = " << cycles << endl;
 }
 
 TEST(Day6, Part1) {
   vector<string> field = readInput();
 
-  int ans = calcDistinctPositions(field, false);
-  EXPECT_EQ(ans, 4789);
-  cout << "Answer = " << ans << endl;
+  auto [changes, cycles] = calcDistinctPositions(field, false);
+  EXPECT_EQ(changes, 4789);
+  EXPECT_EQ(changes, 374);  // too low
+  cout << "Answer (changes) = " << changes << endl;
+  cout << "Answer (cycles)  = " << cycles << endl;
 }
