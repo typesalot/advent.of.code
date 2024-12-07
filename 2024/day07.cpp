@@ -79,15 +79,52 @@ bool is_valid(equation& eq) {
   return false;
 }
 
-uint64_t calcValidEquations(vector<equation>& equations) {
+enum op {
+  op_add,
+  op_mull,
+  op_concat
+};
+
+uint64_t concat(uint64_t a, uint32_t b) {
+  int _b = b;
+  while (_b) {
+    _b /= 10;
+    a *= 10;
+  }
+  uint64_t value = a + b;
+  return value;
+}
+
+bool check_valid_concat(equation& eq, uint64_t curr_total, int i) {
+  auto& nums = eq.nums;
+
+  if (i == nums.size())
+    return curr_total == eq.target;
+
+  if (check_valid_concat(eq, curr_total + nums[i], i + 1))
+    return true;
+  if (check_valid_concat(eq, curr_total * nums[i], i + 1))
+    return true;
+  if (check_valid_concat(eq, concat(curr_total, nums[i]), i + 1))
+    return true;
+  return false;
+}
+
+bool is_valid_concat(equation& eq) {
+  bool valid = check_valid_concat(eq, eq.nums[0], 1);
+  return valid;
+}
+
+uint64_t calcValidEquations(vector<equation>& equations, bool concat) {
   uint64_t sum = 0;
 
   checks = 0;
   for (auto& eq : equations) {
-    if (is_valid(eq))
+    if (concat && is_valid_concat(eq))
+      sum += eq.target;
+    else if (is_valid(eq))
       sum += eq.target;
   }
-
   return sum;
 }
 
@@ -106,7 +143,7 @@ TEST(Day7, Part1Examples) {
       // clang-format on
   };
 
-  uint64_t answer = calcValidEquations(example);
+  uint64_t answer = calcValidEquations(example, false);
   EXPECT_EQ(answer, 3749);
   cout << "Answer = " << answer << endl;
   cout << "Checks = " << checks << endl;
@@ -115,8 +152,38 @@ TEST(Day7, Part1Examples) {
 TEST(Day7, Part1) {
   vector<equation> equations = readInput();
 
-  uint64_t answer = calcValidEquations(equations);
+  uint64_t answer = calcValidEquations(equations, false);
   EXPECT_EQ(answer, 4364915411363);
+  cout << "Answer = " << answer << endl;
+  cout << "Checks = " << checks << endl;
+}
+
+TEST(Day7, Part2Examples) {
+  vector<equation> example = {
+      // clang-format off
+      {190, {10, 19}},
+      {3267, {81, 40, 27}},
+      {83, {17, 5}},
+      {156, {15, 6}},
+      {7290, {6, 8, 6, 15}},
+      {161011, {16, 10, 13}},
+      {192, {17, 8, 14}},
+      {21037, {9, 7, 18, 13}},
+      {292, {11, 6, 16, 20}}
+      // clang-format on
+  };
+
+  uint64_t answer = calcValidEquations(example, true);
+  EXPECT_EQ(answer, 11387);
+  cout << "Answer = " << answer << endl;
+  cout << "Checks = " << checks << endl;
+}
+
+TEST(Day7, Part2) {
+  vector<equation> equations = readInput();
+
+  uint64_t answer = calcValidEquations(equations, true);
+  EXPECT_EQ(answer, 38322057216320);
   cout << "Answer = " << answer << endl;
   cout << "Checks = " << checks << endl;
 }
