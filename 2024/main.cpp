@@ -18,7 +18,9 @@ bool parse_commandline(int argc, char** argv) {
   try {
     for (int i = 1; i < argc; ++i) {
       string arg(argv[i]);
-      if (arg == "--inputs") {
+      if (arg == "--debug")
+        g_config.debug = true;
+      else if (arg == "--inputs") {
         if (i + 1 >= argc)
           throw runtime_error("Missing path for --inputs");
 

@@ -29,6 +29,7 @@ vector<string> split(const string& s, char delimiter);
 
 struct config {
     string input_path;
+    bool   debug = false;
 };
 
 extern config g_config;

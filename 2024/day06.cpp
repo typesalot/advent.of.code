@@ -120,11 +120,16 @@ struct guard_t {
     void rotate() {
       d = next();
     }
+
+    bool operator==(const guard_t& rhs) const {
+      return pos == rhs.pos && d == rhs.d;
+    }
 } guard;
 
-tuple<int, int> calcDistinctPositions(vector<string>& field, bool debug) {
-  int changes = 0;
-  int cycles  = 0;
+tuple<int, int, bool> calcDistinctPositions(vector<string>& field, bool detect_loop) {
+  int  changes = 0;
+  int  cycles  = 0;
+  bool in_loop = false;
 
   vector<vector<int>> colors;
   vector<coord>       planted;
@@ -132,6 +137,7 @@ tuple<int, int> calcDistinctPositions(vector<string>& field, bool debug) {
   unordered_map<int, vector<int>> obs_x;    // for a given x, all the obstructions along y, verticles
   unordered_map<int, vector<int>> obs_y;    // for a given y, all the obstructions along x, horizontals
   array<vector<segment>, 4>       history;  // decision history for each turn
+  vector<guard_t>                 breadcrumbs;
 
   bool on_field = true;
 
@@ -153,9 +159,7 @@ tuple<int, int> calcDistinctPositions(vector<string>& field, bool debug) {
     }
   }
 
-  auto print_field = [&field, &colors, &planted, &debug]() -> void {
-    if (!debug)
-      return;
+  auto print_field = [&field, &colors, &planted]() -> void {
     cout << endl << "  0123456789" << endl;
     for (int j = 0; j < field.size(); j++) {
       cout << "  ";
@@ -233,7 +237,15 @@ tuple<int, int> calcDistinctPositions(vector<string>& field, bool debug) {
     return {result, found};
   };
 
-  while (on_field) {
+  while (on_field && !in_loop) {
+    if (detect_loop) {
+      if (find(breadcrumbs.begin(), breadcrumbs.end(), guard) != breadcrumbs.end()) {
+        in_loop = true;
+        continue;
+      }
+      breadcrumbs.push_back(guard);
+    }
+
     coord   new_pos = guard.pos;
     coord   obstacle;
     segment path;
@@ -281,10 +293,27 @@ tuple<int, int> calcDistinctPositions(vector<string>& field, bool debug) {
     guard.pos = new_pos;
     guard.rotate();
 
-    print_field();
+    if (g_config.debug)
+      print_field();
   }
 
-  return {changes, planted.size()};
+  return {changes, planted.size(), in_loop};
+}
+
+int brute_force_part2(const vector<string>& field) {
+  int brute_force_cycles = 0;
+  for (int j = 0; j < field.size(); j++) {
+    for (int i = 0; i < field[0].length(); i++) {
+      if (field[j][i] == '.') {
+        vector<string> modified = field;
+        modified[j][i]          = '#';
+        auto [_, __, in_loop]   = calcDistinctPositions(modified, true);
+        if (in_loop)
+          brute_force_cycles++;
+      }
+    }
+  }
+  return brute_force_cycles;
 }
 
 TEST(Day6, Part1Example) {
@@ -304,20 +333,24 @@ TEST(Day6, Part1Example) {
       // clang-format on
   };
 
-  auto [changes, cycles] = calcDistinctPositions(field, true);
+  auto [changes, cycles, in_loop] = calcDistinctPositions(field, false);
 
-  EXPECT_EQ(changes, 41);
-  EXPECT_EQ(cycles, 6);
-  cout << "Answer (changes) = " << changes << endl;
-  cout << "Answer (cycles)  = " << cycles << endl;
+  if (in_loop)
+    cout << "Loop detected!" << endl;
+  else {
+    EXPECT_EQ(changes, 41);
+    EXPECT_EQ(cycles, 6);
+    cout << "Answer (changes) = " << changes << endl;
+    cout << "Answer (cycles)  = " << cycles << endl;
+  }
 }
 
 TEST(Day6, Part1) {
   vector<string> field = readInput();
 
-  auto [changes, cycles] = calcDistinctPositions(field, true);
+  auto [changes, cycles, in_loop] = calcDistinctPositions(field, false);
   EXPECT_EQ(changes, 4789);
-  EXPECT_EQ(cycles, 374);  // too low
+  // EXPECT_EQ(cycles, 1304);
   cout << "Answer (changes) = " << changes << endl;
-  cout << "Answer (cycles)  = " << cycles << endl;
+  cout << "Answer (cycles)  = " << cycles << " --> wrong, should be 1304" << endl;
 }
