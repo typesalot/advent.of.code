@@ -26,6 +26,7 @@ using namespace std;
 
 string         getInputFile(int year, int day);
 vector<string> split(const string& s, char delimiter);
+uint64_t       concat_uints(uint64_t a, uint32_t b);
 
 struct config {
     string input_path;

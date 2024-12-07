@@ -14,6 +14,15 @@ vector<string> split(const string& s, char delimiter) {
   return tokens;
 }
 
+uint64_t concat_uints(uint64_t a, uint32_t b) {
+  int _b = b;
+  while (_b) {
+    _b /= 10;
+    a *= 10;
+  }
+  return a + b;
+}
+
 string getInputFile(int year, int day) {
   filesystem::path asset_base = g_config.input_path;
   string           y          = format("{}", year);

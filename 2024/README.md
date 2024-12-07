@@ -8,4 +8,4 @@
 | 4   | :green_circle: | :green_circle:  |                                                                                           |
 | 5   | :green_circle: | :green_circle:  |                                                                                           |
 | 6   | :green_circle: | :orange_circle: | I need to revisit part2 since I used a brute force method just to get the correct answer. |
-| 7   | :black_circle: | :black_circle:  |                                                                                           |
+| 7   | :green_circle: | :green_circle:  |                                                                                           |
