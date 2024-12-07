@@ -35,6 +35,10 @@ struct coord {
     coord(int _x, int _y) : x(_x), y(_y) {};
     int y = 0;
     int x = 0;
+
+    bool operator==(const coord& rhs) const {
+      return x == rhs.x && y == rhs.y;
+    }
 };
 
 struct segment {
@@ -47,45 +51,54 @@ struct segment {
     coord end;
 };
 
-int orient(const coord& a, const coord& b, const coord& c) {
-  return ((b.y - a.y) * (c.x - b.x)) - ((b.x - a.x) * (c.y - b.y));
+std::optional<coord> intersection(coord& p1, coord& p2, coord& p3, coord& p4) {
+  int A = p2.x - p1.x;
+  int B = p4.x - p3.x;
+  int C = p2.y - p1.y;
+  int D = p4.y - p3.y;
+
+  int denominator = A * D - B * C;
+  if (denominator == 0) {
+    // Parallel or collinear
+    return std::nullopt;
+  }
+
+  int numeratorT = (p3.x - p1.x) * D - (p3.y - p1.y) * B;
+  int numeratorU = (p3.x - p1.x) * C - (p3.y - p1.y) * A;
+
+  // Check if 0 <= t <= 1 and 0 <= u <= 1 using integer arithmetic.
+  // If denominator > 0:
+  //   0 <= numeratorT <= denominator and 0 <= numeratorU <= denominator
+  // If denominator < 0:
+  //   denominator <= numeratorT <= 0 and denominator <= numeratorU <= 0
+
+  bool intersects = false;
+  if (denominator > 0) {
+    if (numeratorT >= 0 && numeratorT <= denominator && numeratorU >= 0 && numeratorU <= denominator) {
+      intersects = true;
+    }
+  } else {  // denominator < 0
+    if (numeratorT <= 0 && numeratorT >= denominator && numeratorU <= 0 && numeratorU >= denominator) {
+      intersects = true;
+    }
+  }
+
+  if (!intersects) {
+    return std::nullopt;
+  }
+
+  // Intersection exists. Compute intersection coordinates.
+  // Here we use double just for the final calculation.
+  double t = static_cast<double>(numeratorT) / static_cast<double>(denominator);
+  coord  result;
+  result.x = p1.x + t * A;
+  result.y = p1.y + t * C;
+
+  return result;
 }
 
-bool intersect(segment& s1, segment& s2) {
-  bool result = false;
-
-  std::array<int, 4> o;
-
-  auto check = [&](int i, coord& p1, coord& p2, coord& p3) -> bool {
-    o[i] = orient(p1, p2, p3);
-    if (o[i] == 0)
-      return (min(p1.x, p2.x) <= p3.x && p3.x <= max(p1.x, p2.x)) &&
-             (min(p1.y, p2.y) <= p3.y && p3.y <= max(p1.y, p2.y));
-    return false;
-  };
-  result = check(0, s1.start, s1.end, s2.start);
-  if (result)
-    return true;
-
-  result = check(1, s1.start, s1.end, s2.end);
-  if (result)
-    return true;
-  else if (o[0] * o[1] >= 0) {
-    return false;
-  }
-
-  result = check(2, s2.start, s2.end, s1.start);
-  if (result)
-    return true;
-
-  result = check(3, s2.start, s2.end, s1.end);
-  if (result)
-    return true;
-  else if (o[2] * o[3] >= 0) {
-    return false;
-  }
-
-  return true;
+std::optional<coord> intersection(segment& s1, segment& s2) {
+  return intersection(s1.start, s1.end, s2.start, s2.end);
 }
 
 struct guard_t {
@@ -140,7 +153,7 @@ tuple<int, int> calcDistinctPositions(vector<string>& field, bool debug) {
     }
   }
 
-  auto print_field = [&field, &colors, &debug]() -> void {
+  auto print_field = [&field, &colors, &planted, &debug]() -> void {
     if (!debug)
       return;
     cout << endl << "  0123456789" << endl;
@@ -148,13 +161,20 @@ tuple<int, int> calcDistinctPositions(vector<string>& field, bool debug) {
       cout << "  ";
       for (int i = 0; i < field[0].length(); i++) {
         cout << "\033[";
-        if (guard.pos.y == j && guard.pos.x == i) {
-          cout << color_guard << ";" << 47;
-          cout << "m" << direction_strings[guard.d][0] << "\033[0m";
-        } else {
-          cout << colors[j][i];
-          cout << "m" << field[j][i] << "\033[0m";
+        int  fg = colors[j][i];
+        int  bg = 0;
+        char c  = field[j][i];
+
+        auto p = find(planted.cbegin(), planted.cend(), coord{j, i});
+        if (p != planted.end()) {
+          c  = '?';
+          bg = 43;
+        } else if (guard.pos.y == j && guard.pos.x == i) {
+          fg = color_guard;
+          c  = direction_strings[guard.d][0];
+          bg = 47;
         }
+        cout << fg << ";" << bg << "m" << c << "\033[0m";
       }
       cout << " " << j << endl;
     }
@@ -216,7 +236,6 @@ tuple<int, int> calcDistinctPositions(vector<string>& field, bool debug) {
   while (on_field) {
     coord   new_pos = guard.pos;
     coord   obstacle;
-    coord   obstacle_mirror;
     segment path;
 
     // north
@@ -247,9 +266,9 @@ tuple<int, int> calcDistinctPositions(vector<string>& field, bool debug) {
     path           = {guard.pos, new_pos};
     auto& segments = history[guard.next()];
     for (auto& segment : segments) {
-      if (intersect(path, segment)) {
-        cycles++;
-      }
+      auto itr = intersection(path, segment);
+      if (itr)
+        planted.emplace_back(coord{itr->y, itr->x});
     }
 
     // save guard history and then rotate
@@ -265,7 +284,7 @@ tuple<int, int> calcDistinctPositions(vector<string>& field, bool debug) {
     print_field();
   }
 
-  return {changes, cycles};
+  return {changes, planted.size()};
 }
 
 TEST(Day6, Part1Example) {
@@ -296,9 +315,9 @@ TEST(Day6, Part1Example) {
 TEST(Day6, Part1) {
   vector<string> field = readInput();
 
-  auto [changes, cycles] = calcDistinctPositions(field, false);
+  auto [changes, cycles] = calcDistinctPositions(field, true);
   EXPECT_EQ(changes, 4789);
-  EXPECT_EQ(changes, 374);  // too low
+  EXPECT_EQ(cycles, 374);  // too low
   cout << "Answer (changes) = " << changes << endl;
   cout << "Answer (cycles)  = " << cycles << endl;
 }
