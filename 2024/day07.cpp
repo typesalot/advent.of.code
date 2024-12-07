@@ -18,34 +18,38 @@ struct equation {
     }
 };
 
-vector<equation> readInput() {
-  vector<equation> equations;
+struct Day7 : public ::testing::Test {
+  protected:
+    vector<equation> input;
 
-  auto   f = ifstream(getInputFile(2024, 7));
-  string s;
-  try {
-    while (getline(f, s)) {
-      auto& eq = equations.emplace_back();
-
-      auto p             = s.find(':');
-      auto target_string = s.substr(0, p);
-      p++;
-      auto comps_string = s.substr(p, s.length() - p);
-
-      eq.target  = stoull(target_string);
-      auto parts = split(comps_string, ' ');
-      for (auto p : parts)
-        eq.nums.push_back(stoi(p));
+    void SetUp() override {
+      readInput();
     }
-  } catch (const std::exception& e) {
-    std::cerr << e.what() << '\n';
-    std::cerr << s << '\n';
-  }
 
-  return equations;
+  private:
+    void readInput() {
+      auto   f = ifstream(getInputFile(2024, 7));
+      string s;
+      try {
+        while (getline(f, s)) {
+          auto& eq = input.emplace_back();
+
+          auto p             = s.find(':');
+          auto target_string = s.substr(0, p);
+          p++;
+          auto comps_string = s.substr(p, s.length() - p);
+
+          eq.target  = stoull(target_string);
+          auto parts = split(comps_string, ' ');
+          for (auto p : parts)
+            eq.nums.push_back(stoi(p));
+        }
+      } catch (const std::exception& e) {
+        std::cerr << e.what() << '\n';
+        std::cerr << s << '\n';
+      }
+    };
 };
-
-uint64_t checks = 0;
 
 bool is_valid(equation& eq) {
   unordered_map<uint32_t, int> history;
@@ -59,8 +63,6 @@ bool is_valid(equation& eq) {
 
     for (int i = 1; i < nums.size(); i++) {
       uint32_t mask = 1 << ((nums.size() - 1) - i);
-
-      checks++;
 
       uint32_t is_mull = decision & mask;
       if (is_mull)
@@ -79,12 +81,6 @@ bool is_valid(equation& eq) {
   return false;
 }
 
-enum op {
-  op_add,
-  op_mull,
-  op_concat
-};
-
 uint64_t concat(uint64_t a, uint32_t b) {
   int _b = b;
   while (_b) {
@@ -95,17 +91,26 @@ uint64_t concat(uint64_t a, uint32_t b) {
   return value;
 }
 
-bool check_valid_concat(equation& eq, uint64_t curr_total, int i) {
-  auto& nums = eq.nums;
+uint64_t checks = 0;
 
-  if (i == nums.size())
+bool check_valid_concat(equation& eq, uint64_t curr_total, int i) {
+  if (curr_total > eq.target)
+    return false;
+  if (i == eq.nums.size())
     return curr_total == eq.target;
 
-  if (check_valid_concat(eq, curr_total + nums[i], i + 1))
+  checks++;
+
+  uint64_t add_num = curr_total + eq.nums[i];
+  if (check_valid_concat(eq, add_num, i + 1))
     return true;
-  if (check_valid_concat(eq, curr_total * nums[i], i + 1))
+
+  uint64_t mull_num = curr_total * eq.nums[i];
+  if (check_valid_concat(eq, mull_num, i + 1))
     return true;
-  if (check_valid_concat(eq, concat(curr_total, nums[i]), i + 1))
+
+  uint64_t concat_num = concat(curr_total, eq.nums[i]);
+  if (check_valid_concat(eq, concat_num, i + 1))
     return true;
   return false;
 }
@@ -117,19 +122,19 @@ bool is_valid_concat(equation& eq) {
 
 uint64_t calcValidEquations(vector<equation>& equations, bool concat) {
   uint64_t sum = 0;
-
-  checks = 0;
+  checks       = 0;
   for (auto& eq : equations) {
-    if (concat && is_valid_concat(eq))
-      sum += eq.target;
-    else if (is_valid(eq))
+    if (concat) {
+      if (is_valid_concat(eq))
+        sum += eq.target;
+    } else if (is_valid(eq))
       sum += eq.target;
   }
   return sum;
 }
 
-TEST(Day7, Part1Examples) {
-  vector<equation> example = {
+TEST_F(Day7, Part1Examples) {
+  input = {
       // clang-format off
       {190, {10, 19}},          // *
       {3267, {81, 40, 27}},     // *+ OR +*
@@ -143,23 +148,19 @@ TEST(Day7, Part1Examples) {
       // clang-format on
   };
 
-  uint64_t answer = calcValidEquations(example, false);
+  uint64_t answer = calcValidEquations(input, false);
   EXPECT_EQ(answer, 3749);
   cout << "Answer = " << answer << endl;
-  cout << "Checks = " << checks << endl;
 }
 
-TEST(Day7, Part1) {
-  vector<equation> equations = readInput();
-
-  uint64_t answer = calcValidEquations(equations, false);
+TEST_F(Day7, Part1) {
+  uint64_t answer = calcValidEquations(input, false);
   EXPECT_EQ(answer, 4364915411363);
   cout << "Answer = " << answer << endl;
-  cout << "Checks = " << checks << endl;
 }
 
-TEST(Day7, Part2Examples) {
-  vector<equation> example = {
+TEST_F(Day7, Part2Examples) {
+  input = {
       // clang-format off
       {190, {10, 19}},
       {3267, {81, 40, 27}},
@@ -173,16 +174,13 @@ TEST(Day7, Part2Examples) {
       // clang-format on
   };
 
-  uint64_t answer = calcValidEquations(example, true);
+  uint64_t answer = calcValidEquations(input, true);
   EXPECT_EQ(answer, 11387);
   cout << "Answer = " << answer << endl;
-  cout << "Checks = " << checks << endl;
 }
 
-TEST(Day7, Part2) {
-  vector<equation> equations = readInput();
-
-  uint64_t answer = calcValidEquations(equations, true);
+TEST_F(Day7, Part2) {
+  uint64_t answer = calcValidEquations(input, true);
   EXPECT_EQ(answer, 38322057216320);
   cout << "Answer = " << answer << endl;
   cout << "Checks = " << checks << endl;
