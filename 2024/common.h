@@ -1,3 +1,5 @@
+#pragma once
+
 #include <algorithm>
 #include <cctype>
 #include <chrono>
@@ -23,6 +25,8 @@
 using namespace std;
 
 #include <gtest/gtest.h>
+
+#include "util/coord.h"
 
 string         getInputFile(int year, int day);
 vector<string> split(const string& s, char delimiter);

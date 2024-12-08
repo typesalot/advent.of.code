@@ -17,7 +17,7 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(googletest)
 
 # Add all .cpp files in the current directory to the executable
-file(GLOB SOURCES "*.cpp" "*.h")
+file(GLOB SOURCES "*.cpp" "*.h" "util/*.h" "util/*.cpp")
 
 add_executable(aoc2024 ${SOURCES})
 target_link_libraries(aoc2024 gtest_main)

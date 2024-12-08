@@ -98,7 +98,7 @@ FixNamespaceComments: true
 CompactNamespaces: true
 
 # Includes:
-IncludeBlocks: Regroup
+IncludeBlocks: Preserve
 SortIncludes: CaseSensitive
 
 # Spacing:

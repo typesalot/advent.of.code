@@ -9,6 +9,8 @@ vector<string> readInput() {
   return input;
 }
 
+using point = point_int;
+
 enum colors_t {
   color_unvisited   = 37,  // white
   color_obstruction = 93,  // bright yellow
@@ -30,28 +32,17 @@ unordered_map<direction, string> direction_strings = {
     {WEST, "WEST"},
 };
 
-struct coord {
-    coord() = default;
-    coord(int _x, int _y) : x(_x), y(_y) {};
-    int y = 0;
-    int x = 0;
-
-    bool operator==(const coord& rhs) const {
-      return x == rhs.x && y == rhs.y;
-    }
-};
-
 struct segment {
     segment() = default;
 
-    segment(coord _s, coord _e) : start(_s), end(_e) {
+    segment(point _s, point _e) : start(_s), end(_e) {
     }
 
-    coord start;
-    coord end;
+    point start;
+    point end;
 };
 
-std::optional<coord> intersection(coord& p1, coord& p2, coord& p3, coord& p4) {
+std::optional<point> intersection(point& p1, point& p2, point& p3, point& p4) {
   int A = p2.x - p1.x;
   int B = p4.x - p3.x;
   int C = p2.y - p1.y;
@@ -90,19 +81,19 @@ std::optional<coord> intersection(coord& p1, coord& p2, coord& p3, coord& p4) {
   // Intersection exists. Compute intersection coordinates.
   // Here we use double just for the final calculation.
   double t = static_cast<double>(numeratorT) / static_cast<double>(denominator);
-  coord  result;
+  point  result;
   result.x = p1.x + t * A;
   result.y = p1.y + t * C;
 
   return result;
 }
 
-std::optional<coord> intersection(segment& s1, segment& s2) {
+std::optional<point> intersection(segment& s1, segment& s2) {
   return intersection(s1.start, s1.end, s2.start, s2.end);
 }
 
 struct guard_t {
-    coord     pos;
+    point     pos;
     direction d;
 
     // next direction if rotate 90deg cw
@@ -132,7 +123,7 @@ tuple<int, int, bool> calcDistinctPositions(vector<string>& field, bool detect_l
   bool in_loop = false;
 
   vector<vector<int>> colors;
-  vector<coord>       planted;
+  vector<point>       planted;
 
   unordered_map<int, vector<int>> obs_x;    // for a given x, all the obstructions along y, verticles
   unordered_map<int, vector<int>> obs_y;    // for a given y, all the obstructions along x, horizontals
@@ -169,7 +160,7 @@ tuple<int, int, bool> calcDistinctPositions(vector<string>& field, bool detect_l
         int  bg = 0;
         char c  = field[j][i];
 
-        auto p = find(planted.cbegin(), planted.cend(), coord{j, i});
+        auto p = find(planted.cbegin(), planted.cend(), point{j, i});
         if (p != planted.end()) {
           c  = '?';
           bg = 43;
@@ -184,12 +175,12 @@ tuple<int, int, bool> calcDistinctPositions(vector<string>& field, bool detect_l
     }
   };
 
-  auto update_distinct_path = [&field, &colors](const coord& p1, const coord& p2) -> int {
+  auto update_distinct_path = [&field, &colors](const point& p1, const point& p2) -> int {
     int changes = 0;
 
-    coord field_max = {(int)field[0].length() - 1, (int)field.size() - 1};
-    coord start     = {max(min(p1.x, p2.x), 0), max(min(p1.y, p2.y), 0)};
-    coord end       = {min(max(p1.x, p2.x), field_max.x), min(max(p1.y, p2.y), field_max.y)};
+    point field_max = {(int)field[0].length() - 1, (int)field.size() - 1};
+    point start     = {max(min(p1.x, p2.x), 0), max(min(p1.y, p2.y), 0)};
+    point end       = {min(max(p1.x, p2.x), field_max.x), min(max(p1.y, p2.y), field_max.y)};
 
     for (int y = start.y; y <= end.y; y++)
       for (int x = start.x; x <= end.x; x++) {
@@ -205,8 +196,8 @@ tuple<int, int, bool> calcDistinctPositions(vector<string>& field, bool detect_l
     return changes;
   };
 
-  auto find_obstruction = [&](coord& pos, direction d) -> tuple<coord, bool> {
-    coord result           = pos;
+  auto find_obstruction = [&](point& pos, direction d) -> tuple<point, bool> {
+    point result           = pos;
     bool  found            = false;
     bool  is_verticle      = (d == NORTH || d == SOUTH);
     auto& obstructions_map = (is_verticle) ? obs_y : obs_x;
@@ -246,32 +237,32 @@ tuple<int, int, bool> calcDistinctPositions(vector<string>& field, bool detect_l
       breadcrumbs.push_back(guard);
     }
 
-    coord   new_pos = guard.pos;
-    coord   obstacle;
+    point   new_pos = guard.pos;
+    point   obstacle;
     segment path;
 
     // north
     if (guard.d == NORTH) {
       tie(obstacle, on_field) = find_obstruction(guard.pos, guard.d);
-      changes += update_distinct_path(guard.pos, coord{guard.pos.x, obstacle.y + 1});
+      changes += update_distinct_path(guard.pos, point{guard.pos.x, obstacle.y + 1});
       new_pos.y = obstacle.y + 1;
     }
     // east
     else if (guard.d == EAST) {
       tie(obstacle, on_field) = find_obstruction(guard.pos, guard.d);
-      changes += update_distinct_path(guard.pos, coord{obstacle.x - 1, guard.pos.y});
+      changes += update_distinct_path(guard.pos, point{obstacle.x - 1, guard.pos.y});
       new_pos.x = obstacle.x - 1;
     }
     // south
     else if (guard.d == SOUTH) {
       tie(obstacle, on_field) = find_obstruction(guard.pos, guard.d);
-      changes += update_distinct_path(guard.pos, coord{guard.pos.x, obstacle.y - 1});
+      changes += update_distinct_path(guard.pos, point{guard.pos.x, obstacle.y - 1});
       new_pos.y = obstacle.y - 1;
     }
     // west
     else if (guard.d == WEST) {
       tie(obstacle, on_field) = find_obstruction(guard.pos, guard.d);
-      changes += update_distinct_path(guard.pos, coord{obstacle.x + 1, guard.pos.y});
+      changes += update_distinct_path(guard.pos, point{obstacle.x + 1, guard.pos.y});
       new_pos.x = obstacle.x + 1;
     }
 
@@ -280,7 +271,7 @@ tuple<int, int, bool> calcDistinctPositions(vector<string>& field, bool detect_l
     for (auto& segment : segments) {
       auto itr = intersection(path, segment);
       if (itr)
-        planted.emplace_back(coord{itr->y, itr->x});
+        planted.emplace_back(point{itr->y, itr->x});
     }
 
     // save guard history and then rotate
