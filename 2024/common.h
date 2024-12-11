@@ -26,7 +26,7 @@ using namespace std;
 
 #include <gtest/gtest.h>
 
-#include "util/coord.h"
+#include "util/point.h"
 
 string         getInputFile(int year, int day);
 vector<string> split(const string& s, char delimiter);
