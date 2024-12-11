@@ -32,7 +32,7 @@ class Day8 : public ::testing::Test {
       move = true;
 
       for (int j = 0; j < map.size(); j++) {
-        cout << "  ";
+        cout << "\033[0m  ";
         for (int i = 0; i < map[0].length(); i++)
           cout << format("\033[{}m{}", colors[j][i], map[j][i]);
         cout << endl;
@@ -55,24 +55,26 @@ class Day8 : public ::testing::Test {
           c = 0;
     }
 
-    int numAntinodes() {
+    int numAntinodes(bool resonate) {
       int count = 0;
 
       bounds.top_left     = {0, 0};
       bounds.bottom_right = {static_cast<uint32_t>(map[0].length() - 1), static_cast<uint32_t>(map.size() - 1)};
 
+      set<point> antinodes;
+
       // enumerate antennas
       unordered_map<char, vector<point>> attenas;
-      for (int j = 0; j < map.size(); j++) {
-        for (int i = 0; i < map[j].length(); i++) {
+      for (uint32_t j = 0; j < map.size(); j++) {
+        for (uint32_t i = 0; i < map[j].length(); i++) {
           char type = map[j][i];
           if (type == '.')
             continue;
           attenas[type].emplace_back(i, j);
+          if (resonate)
+            antinodes.insert(point{i, j});
         }
       }
-
-      set<point> antinodes;
 
       for (const auto& [type, locations] : attenas) {
         for (int i = 0; i < locations.size(); i++)
@@ -81,14 +83,24 @@ class Day8 : public ::testing::Test {
             const auto& p2 = locations[j];
 
             auto delta = p2 - p1;
-            auto p3    = p1 - delta;
-            auto p4    = p2 + delta;
-            if (bounds.in_bounds(p3)) {
+
+            auto p3 = p1 - delta;
+            if (resonate) {
+              while (bounds.in_bounds(p3)) {
+                antinodes.insert(p3);
+                p3 = p3 - delta;
+              }
+            } else if (bounds.in_bounds(p3))
               antinodes.insert(p3);
-            }
-            if (bounds.in_bounds(p4)) {
+
+            auto p4 = p2 + delta;
+            if (resonate) {
+              while (bounds.in_bounds(p4)) {
+                antinodes.insert(p4);
+                p4 = p4 + delta;
+              }
+            } else if (bounds.in_bounds(p4))
               antinodes.insert(p4);
-            }
           }
       }
 
@@ -116,13 +128,43 @@ TEST_F(Day8, Part1Example) {
       // clang-format on
   };
 
-  int answer = numAntinodes();
+  int answer = numAntinodes(false);
   EXPECT_EQ(answer, 14);
   cout << "Answer = " << answer << endl;
 }
 
 TEST_F(Day8, Part1) {
-  int answer = numAntinodes();
+  int answer = numAntinodes(false);
   EXPECT_EQ(answer, 222);  //< too large
+  cout << "Answer = " << answer << endl;
+}
+
+TEST_F(Day8, Part2Example) {
+  map = {
+      // clang-format off
+   //0123456789AB
+    "............", // 0
+    "........0...", // 1
+    ".....0......", // 2
+    ".......0....", // 3
+    "....0.......", // 4
+    "......A.....", // 5
+    "............", // 6
+    "............", // 7
+    "........A...", // 8
+    ".........A..", // 9
+    "............", // A
+    "............"  // B
+      // clang-format on
+  };
+
+  int answer = numAntinodes(true);
+  EXPECT_EQ(answer, 34);
+  cout << "Answer = " << answer << endl;
+}
+
+TEST_F(Day8, Part2) {
+  int answer = numAntinodes(true);
+  EXPECT_EQ(answer, 884);
   cout << "Answer = " << answer << endl;
 }
