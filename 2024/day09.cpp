@@ -12,11 +12,49 @@ class Day9 : public testing::Test {
 
         block* next = nullptr;
         block* prev = nullptr;
+
+        bool is_file() const {
+          return id != FREE;
+        }
+
+        bool is_free() const {
+          return id == FREE;
+        }
     };
 
     block*         head = nullptr;
     block*         tail = nullptr;
     vector<block*> free_list;
+
+    void remove(block* b) {
+      if (b->prev)
+        b->prev->next = b->next;
+      if (b->next)
+        b->next->prev = b->prev;
+      if (head == b)
+        head = b->next;
+      if (tail == b)
+        tail = b->prev;
+      delete b;
+    }
+
+    // b1 += b2; delete b2;
+    void merge(block* b1, block* b2) {
+      if (b1 == nullptr || b2 == nullptr)
+        return;
+      assert(b1->id == b2->id);
+      if (b1->id == b2->id)
+        b1->size += b2->size;
+    }
+
+    void contiguous_freespace() {
+      block* c = head;
+      while (c && c->next) {
+        if (c->id == FREE)
+          assert(c->id != c->next->id);
+        c = c->next;
+      }
+    }
 
     void SetUp() override {
       auto fname = getInputFile(2024, 9);
@@ -49,19 +87,17 @@ class Day9 : public testing::Test {
       cout << endl;
     }
 
-    void decompressDisk() {
+    void inflateDisk() {
       bool     is_file    = false;
       uint32_t file_id    = 0;
       block*   prev_block = nullptr;
       for (auto c : compressed) {
         is_file       = !is_file;
         uint32_t size = c - '0';
-        if (size == 0)
-          continue;
 
         block* new_block = new block();
 
-        new_block->size = c - '0';
+        new_block->size = size;
 
         if (is_file) {
           new_block->id = file_id;
@@ -79,37 +115,39 @@ class Day9 : public testing::Test {
         prev_block = new_block;
       }
 
-      // put a free sentinal node at the end to make
-      // the decompress logic simpler
+      // tail free sentinel node
       tail             = new block();
-      prev_block->next = tail;
       tail->prev       = prev_block;
+      prev_block->next = tail;
     }
 
-    void defrag() {
+    void compress() {
       block* cur_node   = tail->prev;
-      block* free_block = nullptr;
+      block* free_block = head->next;
 
       printDisk();
 
-      while (free_list.size()) {
-        if (free_block == nullptr || free_block->id != FREE)
-          free_block = free_list.front();
+      while (free_block != cur_node) {
+        contiguous_freespace();
 
         assert(free_block->id == FREE);
 
         if (free_block->size < cur_node->size) {
-          // use up the entire free block
           free_block->id = cur_node->id;
           cur_node->size -= free_block->size;
-          tail->size += free_block->size;
-          free_list.erase(free_list.begin());
+
+          assert(cur_node->next->is_free());
+          cur_node->next->size += free_block->size;
         } else if (free_block->size == cur_node->size) {
           free_block->id = cur_node->id;
-          cur_node->id   = FREE;
-          cur_node->size -= free_block->size;
-          tail->size += free_block->size;
-          free_list.erase(free_list.begin());
+
+          cur_node->id = FREE;
+          block* tmp   = cur_node->prev;
+          merge(cur_node, cur_node->next);
+          merge(cur_node->prev, cur_node);
+          remove(cur_node->next);
+          remove(cur_node);
+          cur_node = tmp;
         } else {
           // split the free block
           block* new_block      = new block();
@@ -122,40 +160,38 @@ class Day9 : public testing::Test {
           free_block->id   = cur_node->id;
           free_block->size = cur_node->size;
           free_block->next = new_block;
-
-          // update the free_list
-          free_list.erase(free_list.begin());
-          free_list.insert(free_list.begin(), new_block);
-
-          // update the tail sentinel
-          tail->size += cur_node->size;
+          free_block       = new_block;
 
           // update cur_node
-          cur_node->id   = FREE;
-          cur_node->size = 0;
+          cur_node->id = FREE;
+          block* tmp   = cur_node->prev;
+          merge(cur_node, cur_node->next);
+          merge(cur_node->prev, cur_node);
+          remove(cur_node->next);
+          remove(cur_node);
+          cur_node = tmp;
         }
 
-        if (cur_node->id == FREE) {
-          do {
-            cur_node = cur_node->prev;
-
-            if (cur_node->id == FREE) {
-              auto itr =
-                  find_if(free_list.cbegin(), free_list.cend(), [&cur_node](const block* b) { return b == cur_node; });
-              assert(itr != free_list.cend());
-              free_list.erase(itr);
-            }
-          } while (cur_node && cur_node->id == FREE);
+        // get next file block
+        while (cur_node->is_free()) {
+          if (free_block == cur_node)
+            break;
+          cur_node = cur_node->prev;
         }
 
+        // get next free block
+        while (free_block->is_file()) {
+          if (free_block == cur_node)
+            break;
+          free_block = free_block->next;
+        }
         printDisk();
       }
+
+      contiguous_freespace();
     }
 
     uint64_t getChecksum() {
-      decompressDisk();
-      defrag();
-
       uint64_t checksum = 0;
 
       block* cur_block = head;
@@ -172,13 +208,20 @@ class Day9 : public testing::Test {
     }
 };
 
-TEST_F(Day9, Part1Examples) {
-  compressed        = "2333133121414131402";
+TEST_F(Day9, Part1Example) {
+  compressed = "2333133121414131402";
+
+  inflateDisk();
+  compress();
+
   uint64_t checksum = getChecksum();
   EXPECT_EQ(checksum, 1928);
 }
 
 TEST_F(Day9, Part1) {
+  inflateDisk();
+  compress();
+
   uint64_t checksum = getChecksum();
   EXPECT_EQ(checksum, 6242766523059);
   cout << "Answer = " << checksum << endl;
