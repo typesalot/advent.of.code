@@ -10,4 +10,8 @@
 | 6   | :green_circle: | :orange_circle: | Part2 felt like more of a brute-force than what was expected. |
 | 7   | :green_circle: | :green_circle:  |                                                               |
 | 8   | :green_circle: | :green_circle:  |                                                               |
-| 9   | :green_circle: | :black_circle:  |                                                               |
+| 9   | :green_circle: | :green_circle:  |                                                               |
+| 10  | :black_circle: | :black_circle:  |                                                               |
+| 11  | :black_circle: | :black_circle:  |                                                               |
+| 12  | :black_circle: | :black_circle:  |                                                               |
+| 13  | :black_circle: | :black_circle:  |                                                               |
