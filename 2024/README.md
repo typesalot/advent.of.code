@@ -1,7 +1,5 @@
 # 2024
 
-# Completion
-
 | Day | Part1          | Part2           |
 | --- | -------------- | --------------- |
 | 1   | :green_circle: | :green_circle:  |
@@ -30,8 +28,10 @@
 | 24  | :black_circle: | :black_circle:  |
 | 25  | :black_circle: | :black_circle:  |
 
-# Journal
+## Journal
 
-# Day 10: Hoof It
+### Day 10: Hoof It
 
 Path finding both to unique destinations and unique paths. I misunderstood the problem initially and solved Part2 as Part1. Since the max depth is only 9, I used recursion to navigate the map. I also took a dynamic programming approach to keep a history of traveled score/rating per location to avoid re-navigating previous paths.
+
+### Day 11: Plutonian Pebbles
