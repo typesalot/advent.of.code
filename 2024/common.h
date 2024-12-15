@@ -1,6 +1,7 @@
 #pragma once
 
 #include <algorithm>
+#include <bitset>
 #include <cctype>
 #include <chrono>
 #include <cstdlib>
@@ -18,6 +19,7 @@
 #include <queue>
 #include <set>
 #include <sstream>
+#include <stack>
 #include <string>
 #include <string_view>
 #include <unordered_map>

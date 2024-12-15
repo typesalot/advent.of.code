@@ -13,7 +13,7 @@
 | 9   | :green_circle: | :green_circle:  |
 | 10  | :green_circle: | :green_circle:  |
 | 11  | :green_circle: | :green_circle:  |
-| 12  | :black_circle: | :black_circle:  |
+| 12  | :green_circle: | :black_circle:  |
 | 13  | :black_circle: | :black_circle:  |
 | 14  | :black_circle: | :black_circle:  |
 | 15  | :black_circle: | :black_circle:  |
