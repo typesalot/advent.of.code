@@ -37,3 +37,5 @@ Path finding both to unique destinations and unique paths. I misunderstood the p
 ### Day 11: Plutonian Pebbles
 
 A lot of common subcases that can be cached to avoid re-calculation, with the added complexity that the cache needs to be blink-level aware. I used recursion as well since Part2's 75 blinks means a manageable function depth.
+
+### Day 12: Garden Groups
