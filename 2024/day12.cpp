@@ -2,9 +2,7 @@
 
 class Day12 : public testing::Test {
   protected:
-    vector<term::string> plot;
-    int                  w;
-    int                  h;
+    using point = point_int;
 
     struct region {
         char     crop;
@@ -13,6 +11,12 @@ class Day12 : public testing::Test {
 
         region(char _c) : crop(_c) {};
     };
+
+    vector<term::string> plot;
+    int                  w;
+    int                  h;
+    vector<vector<bool>> visited;
+    vector<region>       regions;
 
     void SetUp() override {
       auto   fname = getInputFile(2024, 12);
@@ -71,84 +75,77 @@ class Day12 : public testing::Test {
       return perim;
     }
 
-    uint32_t getPrice() {
-      using point = point_uint;
+    void map_region(int startx, int starty) {
+      char current_crop = plot[starty][startx];
+      clear_colors();
+      regions.emplace_back(current_crop);
+      auto& region = regions.back();
 
-      uint32_t price = 0;
-
-      h = plot.size();
-      w = plot[0].length();
-
-      vector<region>       regions;
-      deque<point>         next;
-      vector<vector<bool>> visited(h);
-
-      for (auto& v : visited)
-        v.resize(w, false);
-
-      regions.emplace_back(plot[0][0]);
-      next.emplace_front(0, 0);
+      queue<point> next;
+      next.emplace(startx, starty);
 
       while (!next.empty()) {
-        auto& region = regions.back();
-
         int x = next.front().x;
         int y = next.front().y;
-        next.pop_front();
+        next.pop();
 
-        // skip if visited and update
         if (visited[x][y])
           continue;
         visited[x][y] = true;
 
-        auto current_crop = plot[y][x];
-        if (region.crop != current_crop) {
-          clear_colors();
-          regions.emplace_back(current_crop);
-          region = regions.back();
-          region.area++;
-          // auto& n = regions.back();
-          // n.area++;
-        }
+        region.area++;
+        region.perim += calcPerim(region.crop, x, y);
 
-        if (region.crop == current_crop) {
-          region.area++;
-          region.perim += calcPerim(region.crop, x, y);
+        if (g_config.debug) {
+          plot[y].background(x).red();
+          print_plot();
         }
-
-        plot[y].background(x).red();
-        print_plot();
 
         // add unvisited neighbors
         if (x != 0 && !visited[x - 1][y]) {
           if (plot[y][x - 1] == current_crop)
-            next.emplace_front(x - 1, y);
-          else
-            next.emplace_back(x - 1, y);
+            next.emplace(x - 1, y);
         }
 
         if (x + 1 < w && !visited[x + 1][y]) {
           if (plot[y][x + 1] == current_crop)
-            next.emplace_front(x + 1, y);
-          else
-            next.emplace_back(x + 1, y);
+            next.emplace(x + 1, y);
         }
 
         if (y != 0 && !visited[x][y - 1]) {
           if (plot[y - 1][x] == current_crop)
-            next.emplace_front(x, y - 1);
-          else
-            next.emplace_back(x, y - 1);
+            next.emplace(x, y - 1);
         }
 
         if (y + 1 < h && !visited[x][y + 1]) {
           if (plot[y + 1][x] == current_crop)
-            next.emplace_front(x, y + 1);
-          else
-            next.emplace_back(x, y + 1);
+            next.emplace(x, y + 1);
+        }
+      }
+    }
+
+    uint32_t getPrice() {
+      regions.clear();
+      visited.clear();
+
+      h = plot.size();
+      w = plot[0].length();
+
+      visited.resize(h);
+      for (auto& v : visited)
+        v.resize(w, false);
+
+      for (int y = 0; y < h; y++) {
+        for (int x = 0; x < w; x++) {
+          // skip visited nodes
+          if (visited[x][y])
+            continue;
+
+          map_region(x, y);
         }
       }
 
+      uint32_t price = 0;
       for (const auto& region : regions)
         price += region.area * region.perim;
 
@@ -170,7 +167,22 @@ TEST_F(Day12, Part1Example) {
 
   uint32_t price = getPrice();
   EXPECT_EQ(price, 1930);
+  EXPECT_EQ(regions.size(), 11);
+
+  plot = {
+      "OOOOO",
+      "OXOXO",
+      "OOOOO",
+      "OXOXO",
+      "OOOOO",
+  };
+
+  price = getPrice();
+  EXPECT_EQ(price, 1 * 4 * 4 + 21 * 36);
+  EXPECT_EQ(regions.size(), 5);
 }
 
 TEST_F(Day12, Part1) {
+  uint32_t price = getPrice();
+  EXPECT_EQ(price, 1450816);
 }

@@ -4,7 +4,7 @@ template <typename T>
 struct point {
     point() : y(T(0)), x(T(0)) {};
 
-    point(int _x, int _y) : y(_y), x(_x) {
+    point(T _x, T _y) : y(_y), x(_x) {
     }
 
     point(const initializer_list<T>& init) {
