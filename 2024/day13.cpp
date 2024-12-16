@@ -10,7 +10,9 @@ class Day13 : public ::testing::Test {
         point prize;
     };
 
-    vector<machine> machines;
+    vector<machine>                              machines;
+    vector<pair<int, int>>                       matches;
+    unordered_map<int, unordered_map<int, bool>> cache;
 
     void SetUp() override {
       string fname = getInputFile(2024, 13);
@@ -45,6 +47,44 @@ class Day13 : public ::testing::Test {
           machines.back().prize = {stoi(x), stoi(y)};
       }
     }
+
+    void token_path(int a, int b, const machine& m) {
+      cache[a][b] = true;
+
+      int x = a * m.a.x + b * m.b.x;
+      int y = a * m.a.y + b * m.b.y;
+
+      if (y > m.prize.y || x > m.prize.x)
+        return;
+      if (y == m.prize.y || x == m.prize.x) {
+        matches.emplace_back(a, b);
+        return;
+      }
+
+      if (!cache[a + 1][b])
+        token_path(a + 1, b, m);  // press A...
+      if (!cache[a][b + 1])
+        token_path(a, b + 1, m);  // or press B...
+    };
+
+    int getMinTokens(const machine& m) {
+      int tokens = 0;
+
+      cache.clear();
+      matches.clear();
+      token_path(0, 0, m);
+
+      return tokens;
+    }
+
+    int minTokens() {
+      int tokens = 0;
+
+      for (const auto& m : machines)
+        tokens += getMinTokens(m);
+
+      return tokens;
+    }
 };
 
 TEST_F(Day13, Part1Example) {
@@ -65,8 +105,11 @@ TEST_F(Day13, Part1Example) {
     "Button A: X+69, Y+23\n"
     "Button B: X+27, Y+71\n"
     "Prize: X=18641, Y=10279\n";
+  // clang-format on
+
   auto input = istringstream(s);
   readInput(input);
 
-  // clang-format on
+  int tokens = minTokens();
+  EXPECT_EQ(tokens, 480);
 }
