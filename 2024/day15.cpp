@@ -11,6 +11,18 @@ class Day15 : public ::testing::Test {
       readInput(f);
     };
 
+    void print_map() {
+      if (!g_config.debug)
+        return;
+
+      static bool move = false;
+      if (move)
+        cout << term::cursor::move_up(map.size());
+      move = true;
+      for (const auto& m : map)
+        cout << m << endl;
+    }
+
     template <typename src_t>
     void readInput(src_t& src) {
       map.clear();
@@ -56,6 +68,9 @@ TEST_F(Day15, Part1Example) {
 
   auto input = istringstream(s);
   readInput(input);
+
+  map[0].background(0).red();
+  print_map();
 
   int total = getBoxesGpsTotal();
   // EXPECT_EQ(total, 10092);
