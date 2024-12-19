@@ -59,6 +59,18 @@ struct point {
       return result;
     }
 
+    point<T>& operator+=(const point<T>& rhs) {
+      this->x += rhs.x;
+      this->y += rhs.y;
+      return *this;
+    }
+
+    point<T>& operator-=(const point<T>& rhs) {
+      this->x -= rhs.x;
+      this->y -= rhs.y;
+      return *this;
+    }
+
     operator std::string() const {
       return format("{},{}", y, x);
     }

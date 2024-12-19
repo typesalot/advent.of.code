@@ -48,4 +48,11 @@ How to efficiently compute the number of button presses to reach a target. I did
 
 ### Day 14: Restroom Redoubt
 
-Have to correctly handle the wrapping in both the underflow and overflow cases and it pretty straightforward. Finding the tree in Part2 is cute and it takes a little bit of guess work to figure out what the tree is supposed to look like.
+Have to correctly handle the wrapping in both the underflow and overflow cases and it pretty straight-forward. Finding the tree in Part2 is cute and it takes a little bit of guess work to figure out what the tree is supposed to look like.
+
+### Day 15: Warehouse Woes
+
+Moving boxes; fun puzzle.
+
+### Day 16: Reindeer Maze
+
