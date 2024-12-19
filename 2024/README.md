@@ -16,7 +16,7 @@
 | 12  | :green_circle: | :black_circle:  |
 | 13  | :green_circle: | :black_circle:  |
 | 14  | :green_circle: | :green_circle:  |
-| 15  | :black_circle: | :black_circle:  |
+| 15  | :green_circle: | :black_circle:  |
 | 16  | :black_circle: | :black_circle:  |
 | 17  | :black_circle: | :black_circle:  |
 | 18  | :black_circle: | :black_circle:  |
