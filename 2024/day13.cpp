@@ -12,15 +12,16 @@ class Day13 : public ::testing::Test {
 
     vector<machine>               machines;
     vector<pair<int, int>>        matches;
-    unordered_map<uint32_t, bool> cache;
+    unordered_map<uint64_t, bool> cache;
+    uint64_t                      bias = 0;
 
     union cache_key {
         struct {
-            uint32_t a : 16;
-            uint32_t b : 16;
+            uint32_t a : 32;
+            uint32_t b : 32;
         };
 
-        uint32_t value;
+        uint64_t value;
     };
 
     void SetUp() override {
@@ -57,21 +58,24 @@ class Day13 : public ::testing::Test {
       }
     }
 
-    void token_path(int a, int b, const machine& m) {
+    void token_path(uint32_t a, uint32_t b, const machine& m) {
       cache_key key;
-      assert(a < (1 << 16) - 1);
-      assert(b < (1 << 16) - 1);
+      assert(a < numeric_limits<uint32_t>::max());
+      assert(b < numeric_limits<uint32_t>::max());
       key.a = a;
       key.b = b;
 
       cache[key.value] = true;
 
-      int x = a * m.a.x + b * m.b.x;
-      int y = a * m.a.y + b * m.b.y;
+      uint64_t x = a * m.a.x + b * m.b.x;
+      uint64_t y = a * m.a.y + b * m.b.y;
 
-      if (y > m.prize.y && x > m.prize.x)
+      uint64_t prize_x = m.prize.x + bias;
+      uint64_t prize_y = m.prize.y + bias;
+
+      if (y > prize_y || x > prize_x)
         return;
-      if (y == m.prize.y && x == m.prize.x) {
+      if (y == prize_y && x == prize_x) {
         matches.emplace_back(a, b);
         return;
       }
@@ -145,4 +149,35 @@ TEST_F(Day13, Part1Example) {
 TEST_F(Day13, Part1) {
   int tokens = minTokens();
   EXPECT_EQ(tokens, 31623);
+}
+
+TEST_F(Day13, Part2Example) {
+  return;
+
+  string s =
+      // clang-format off
+    "Button A: X+94, Y+34\n"
+    "Button B: X+22, Y+67\n"
+    "Prize: X=8400, Y=5400\n"
+    "\n"
+    "Button A: X+26, Y+66\n"
+    "Button B: X+67, Y+21\n"
+    "Prize: X=12748, Y=12176\n"
+    "\n"
+    "Button A: X+17, Y+86\n"
+    "Button B: X+84, Y+37\n"
+    "Prize: X=7870, Y=6450\n"
+    "\n"
+    "Button A: X+69, Y+23\n"
+    "Button B: X+27, Y+71\n"
+    "Prize: X=18641, Y=10279\n";
+  // clang-format on
+
+  bias = 10000000000000;
+
+  auto input = istringstream(s);
+  readInput(input);
+
+  int tokens = minTokens();
+  EXPECT_EQ(tokens, 480);
 }

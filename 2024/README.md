@@ -14,7 +14,7 @@
 | 10  | :green_circle: | :green_circle:  |
 | 11  | :green_circle: | :green_circle:  |
 | 12  | :green_circle: | :black_circle:  |
-| 13  | :black_circle: | :black_circle:  |
+| 13  | :green_circle: | :black_circle:  |
 | 14  | :black_circle: | :black_circle:  |
 | 15  | :black_circle: | :black_circle:  |
 | 16  | :black_circle: | :black_circle:  |
@@ -43,3 +43,5 @@ A lot of common subcases that can be cached to avoid re-calculation, with the ad
 Pricing a fence using area and perimeter and sides.
 
 ### Day 13: Claw Contraption
+
+How to efficiently compute the number of button presses to reach a target. I did part1 with a simple permutation and cache to early exit common cases, but it doesn't scale for part2. Will need to revisit.
