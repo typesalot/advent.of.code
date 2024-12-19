@@ -15,7 +15,7 @@
 | 11  | :green_circle: | :green_circle:  |
 | 12  | :green_circle: | :black_circle:  |
 | 13  | :green_circle: | :black_circle:  |
-| 14  | :black_circle: | :black_circle:  |
+| 14  | :green_circle: | :green_circle:  |
 | 15  | :black_circle: | :black_circle:  |
 | 16  | :black_circle: | :black_circle:  |
 | 17  | :black_circle: | :black_circle:  |
@@ -45,3 +45,7 @@ Pricing a fence using area and perimeter and sides.
 ### Day 13: Claw Contraption
 
 How to efficiently compute the number of button presses to reach a target. I did part1 with a simple permutation and cache to early exit common cases, but it doesn't scale for part2. Will need to revisit.
+
+### Day 14: Restroom Redoubt
+
+Have to correctly handle the wrapping in both the underflow and overflow cases and it pretty straightforward. Finding the tree in Part2 is cute and it takes a little bit of guess work to figure out what the tree is supposed to look like.
