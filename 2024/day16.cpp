@@ -135,23 +135,27 @@ class Day16 : public ::testing::Test {
       queue<choice> choices;
       choices.emplace(start, 0, o_east);
 
-      // cast rays
-      vertex*  current             = choices.front().vertex;
-      uint32_t existing_cost       = choices.front().cost;
-      uint32_t current_orientation = choices.front().from;
-      choices.pop();
+      // walk through navigation choices
+      while (!choices.empty()) {
+        vertex*  current             = choices.front().vertex;
+        uint32_t existing_cost       = choices.front().cost;
+        uint32_t current_orientation = choices.front().from;
+        choices.pop();
 
-      point ray     = {1, 0};
-      auto  ray_hit = castRay(map, current->pos, ray);
-      if (current->pos != ray_hit) {
-        uint32_t ray_orientation = getRayOrientation(ray);
-        uint32_t turn_cost       = getTurnCost(current_orientation, ray_orientation);
-        uint32_t travel_cost     = getDistanceCost(current->pos - ray_hit);
-        uint32_t cost            = existing_cost + turn_cost + travel_cost;
+        // east ray
+        point ray     = {1, 0};
+        auto  ray_hit = castRay(map, current->pos, ray);
+        if (current->pos != ray_hit) {
+          uint32_t ray_orientation = getRayOrientation(ray);
+          uint32_t turn_cost       = getTurnCost(current_orientation, ray_orientation);
+          uint32_t travel_cost     = getDistanceCost(current->pos - ray_hit);
+          uint32_t cost            = existing_cost + turn_cost + travel_cost;
 
-        vertex* dst = graph.add_vertex(ray_hit);
+          vertex* dst = graph.add_vertex(ray_hit);
 
-        current->edges.emplace_back(dst, cost);
+          current->edges.emplace_back(dst, cost);
+          choices.emplace(dst, cost, ray_orientation);
+        }
       }
     }
 
