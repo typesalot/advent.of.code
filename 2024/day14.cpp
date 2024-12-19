@@ -15,6 +15,11 @@ class Day14 : public ::testing::Test {
         point vel;
     };
 
+    // part2
+    bool           find_tree;
+    uint32_t       tree_time = 0;
+    vector<string> arena;
+
     vector<robot> robots;
 
     void SetUp() override {
@@ -63,11 +68,65 @@ class Day14 : public ::testing::Test {
         get<bottom_right>(q)++;
     }
 
+    void print_arena(int32_t arena_h) {
+      if (!g_config.debug)
+        return;
+
+      static bool move = false;
+      if (move)
+        cout << term::cursor::move_up(arena_h);
+      move = true;
+      for (auto& r : arena)
+        fill(r.begin(), r.end(), '.');
+      for (const auto& robot : robots) {
+        const int32_t& x = robot.pos.x;
+        const int32_t& y = robot.pos.y;
+        char&          c = arena[y][x];
+        if (c == '.')
+          c = '#';
+      }
+      for (auto& r : arena)
+        cout << r << endl;
+    }
+
+    bool is_tree() {
+      bool result = false;
+
+      sort(robots.begin(), robots.end(), [](const robot& l, const robot& r) -> bool {
+        return (r.pos.y == l.pos.y) ? r.pos.x > l.pos.x : r.pos.y > l.pos.y;
+      });
+
+      uint32_t span = 0;
+      for (int i = 0; i < robots.size() - 1 && !result; i++) {
+        const robot& cur  = robots[i];
+        const robot& next = robots[i + 1];
+        if (cur.pos.y == next.pos.y) {
+          int32_t delta = abs(next.pos.x - cur.pos.x);
+          assert(delta >= 0);
+          if (delta <= 1)
+            span++;
+          else
+            span = 0;
+        } else
+          span = 0;
+
+        result = span >= 15;
+      }
+
+      return result;
+    }
+
     auto getSafetyFactor(int32_t arena_w, int32_t arena_h, uint32_t time) -> quadrants {
       quadrants answer;
 
-      for (auto& r : robots) {
-        for (uint32_t t = 0; t < time; t++) {
+      if (g_config.debug) {
+        arena.resize(arena_h);
+        for (auto& r : arena)
+          r = string(arena_w, '.');
+      }
+
+      for (uint32_t t = 0; t < time || find_tree; t++) {
+        for (auto& r : robots) {
           r.pos = r.pos + r.vel;
 
           auto& x = r.pos.x;
@@ -86,8 +145,21 @@ class Day14 : public ::testing::Test {
             y = arena_h - (-1 * y + arena_h) % arena_h;
         }
 
-        updateQuadrant(answer, r.pos.x, r.pos.y, arena_w, arena_h);
+        if (find_tree) {
+          if (is_tree()) {
+            print_arena(arena_h);
+
+            tree_time = t + 1;
+            find_tree = false;
+            time      = 0;
+            break;
+          }
+        }
       }
+
+      if (!find_tree)
+        for (auto& r : robots)
+          updateQuadrant(answer, r.pos.x, r.pos.y, arena_w, arena_h);
 
       return answer;
     }
@@ -160,4 +232,11 @@ TEST_F(Day14, Part1) {
   auto [ul, ur, bl, br] = getSafetyFactor(101, 103, 100);
   uint32_t safety       = ul * ur * bl * br;
   EXPECT_EQ(safety, 229421808);
+}
+
+TEST_F(Day14, Part2) {
+  find_tree = true;
+
+  getSafetyFactor(101, 103, -1);
+  EXPECT_EQ(tree_time, 6577);
 }
