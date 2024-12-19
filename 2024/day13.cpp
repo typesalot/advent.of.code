@@ -10,9 +10,18 @@ class Day13 : public ::testing::Test {
         point prize;
     };
 
-    vector<machine>                              machines;
-    vector<pair<int, int>>                       matches;
-    unordered_map<int, unordered_map<int, bool>> cache;
+    vector<machine>               machines;
+    vector<pair<int, int>>        matches;
+    unordered_map<uint32_t, bool> cache;
+
+    union cache_key {
+        struct {
+            uint32_t a : 16;
+            uint32_t b : 16;
+        };
+
+        uint32_t value;
+    };
 
     void SetUp() override {
       string fname = getInputFile(2024, 13);
@@ -49,39 +58,58 @@ class Day13 : public ::testing::Test {
     }
 
     void token_path(int a, int b, const machine& m) {
-      cache[a][b] = true;
+      cache_key key;
+      assert(a < (1 << 16) - 1);
+      assert(b < (1 << 16) - 1);
+      key.a = a;
+      key.b = b;
+
+      cache[key.value] = true;
 
       int x = a * m.a.x + b * m.b.x;
       int y = a * m.a.y + b * m.b.y;
 
-      if (y > m.prize.y || x > m.prize.x)
+      if (y > m.prize.y && x > m.prize.x)
         return;
-      if (y == m.prize.y || x == m.prize.x) {
+      if (y == m.prize.y && x == m.prize.x) {
         matches.emplace_back(a, b);
         return;
       }
 
-      if (!cache[a + 1][b])
+      key.a++;
+      if (!cache[key.value])
         token_path(a + 1, b, m);  // press A...
-      if (!cache[a][b + 1])
+      key.a--;
+      key.b++;
+      if (!cache[key.value])
         token_path(a, b + 1, m);  // or press B...
     };
 
-    int getMinTokens(const machine& m) {
-      int tokens = 0;
+    optional<uint32_t> getMinTokens(const machine& m) {
+      uint32_t tokens = numeric_limits<uint32_t>::max();
 
       cache.clear();
       matches.clear();
       token_path(0, 0, m);
 
+      if (matches.size()) {
+        for (const auto [a, b] : matches)
+          tokens = min<uint32_t>(tokens, a * 3 + b);
+      } else {
+        return nullopt;
+      }
+
       return tokens;
     }
 
-    int minTokens() {
-      int tokens = 0;
+    uint32_t minTokens() {
+      uint32_t tokens = 0;
 
-      for (const auto& m : machines)
-        tokens += getMinTokens(m);
+      for (const auto& m : machines) {
+        auto t = getMinTokens(m);
+        if (t)
+          tokens += t.value();
+      }
 
       return tokens;
     }
@@ -112,4 +140,9 @@ TEST_F(Day13, Part1Example) {
 
   int tokens = minTokens();
   EXPECT_EQ(tokens, 480);
+}
+
+TEST_F(Day13, Part1) {
+  int tokens = minTokens();
+  EXPECT_EQ(tokens, 31623);
 }
