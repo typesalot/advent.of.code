@@ -1,4 +1,8 @@
 #pragma once
+#include <cstdint>
+#include <initializer_list>
+#include <ostream>
+#include <string>
 
 template <typename T>
 struct point {
@@ -7,7 +11,7 @@ struct point {
     point(T _x, T _y) : y(_y), x(_x) {
     }
 
-    point(const initializer_list<T>& init) {
+    point(const std::initializer_list<T>& init) {
       auto itr = init.begin();
 
       x = *itr;
@@ -36,7 +40,7 @@ struct point {
       return (y == other.y) ? x < other.x : y < other.y;
     }
 
-    friend ostream& operator<<(ostream& o, const point<T>& rhs) {
+    friend std::ostream& operator<<(std::ostream& o, const point<T>& rhs) {
       o << rhs;
       return o;
     }

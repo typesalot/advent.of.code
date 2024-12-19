@@ -1,4 +1,11 @@
-#include "common.h"
+#include "util/config.h"
+#include "util/point.h"
+#include "util/string.h"
+#include "util/term.h"
+#include <fstream>
+#include <gtest/gtest.h>
+#include <tuple>
+using namespace std;
 
 class Day14 : public ::testing::Test {
   protected:

@@ -58,6 +58,15 @@ struct Day7 : public ::testing::Test {
       return false;
     }
 
+    uint64_t concat_uints(uint64_t a, uint32_t b) {
+      int _b = b;
+      while (_b) {
+        _b /= 10;
+        a *= 10;
+      }
+      return a + b;
+    }
+
     bool check_valid_concat(equation& eq, uint64_t curr_total, int i) {
       if (curr_total > eq.target)
         return false;
