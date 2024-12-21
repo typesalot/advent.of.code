@@ -19,6 +19,11 @@ class Day16 : public ::testing::Test {
     uint32_t             w;
     uint32_t             h;
 
+    static constexpr int north = 0;
+    static constexpr int east  = 1;
+    static constexpr int south = 2;
+    static constexpr int west  = 3;
+
     void SetUp() override {
     }
 
@@ -78,17 +83,21 @@ class Day16 : public ::testing::Test {
 
       distances[start.flatten(w)] = 0;
 
-      using node_t      = pair<int, int>;  // distance,node
+      using node_t      = tuple<int, int, int>;  // distance,node,direction
       using container_t = vector<node_t>;
       using comp_t      = greater<node_t>;
       priority_queue<node_t, container_t, comp_t> pq;
 
-      pq.push({0, start.flatten(w)});
+      pq.emplace(0, start.flatten(w), east);
 
       while (!pq.empty()) {
-        int dist = pq.top().first;   // distance
-        int u    = pq.top().second;  // node
+        int dist  = get<0>(pq.top());  // distance
+        int u     = get<1>(pq.top());  // node
+        int u_dir = get<2>(pq.top());  // direction
         pq.pop();
+
+        if (u == end.flatten(w))
+          break;
 
         if (dist > distances[u])
           continue;
@@ -98,19 +107,30 @@ class Day16 : public ::testing::Test {
         print_map();
 
         point p = point::expand(u, w);
-        for (const auto& dir : directions) {
-          point next = p + dir;
+        for (int v_dir = 0; v_dir < 4; v_dir++) {
+          // opposite directions are always mod2 because of
+          // how the cardinal directions are defined above
+          if (v_dir != u_dir && (v_dir + u_dir % 2 == 0))
+            continue;
+
+          point next = p + directions[v_dir];
 
           if (map[next.y][next.x] == '#')
             continue;
 
-          uint32_t v      = next.flatten(w);
-          int      weight = 1;
+          uint32_t v = next.flatten(w);
+
+          // costs 1 to move to next node
+          int weight = 1;
+
+          // costs 1000 to turn
+          if (v_dir != u_dir)
+            weight += 1000;
 
           if (distances[u] + weight < distances[v]) {
             distances[v]    = distances[u] + weight;
             predecessors[v] = u;
-            pq.push({distances[v], v});
+            pq.emplace(distances[v], v, v_dir);
           }
         }
       }
@@ -127,6 +147,8 @@ class Day16 : public ::testing::Test {
         map[p.y].background(p.x).green();
         print_map();
       }
+
+      cost = distances[end.flatten(w)];
 
       return cost;
     }
