@@ -74,6 +74,18 @@ struct point {
     operator std::string() const {
       return format("{},{}", y, x);
     }
+
+    uint32_t flatten(uint32_t width) const {
+      return y * width + x;
+    }
+
+    template <typename value_t>
+    static point<T> expand(value_t value, uint32_t width) {
+      point<T> p;
+      p.y = value / width;
+      p.x = value % width;
+      return p;
+    }
 };
 
 using point_int  = point<int32_t>;
