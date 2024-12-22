@@ -28,6 +28,10 @@ cursor cursor::restore() {
   return cursor("\033[u");
 }
 
+cursor cursor::clear() {
+  return cursor("\033[2J\033[H");
+}
+
 cursor cursor::move(uint32_t x, uint32_t y) {
   return cursor(std::format("\033[{};{}H", x, y));
 }

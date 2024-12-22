@@ -237,5 +237,7 @@ class cursor {
     static cursor save();
     static cursor restore();
     static cursor move(uint32_t x, uint32_t y);
+
+    static cursor clear();
 };
 }  // namespace term
