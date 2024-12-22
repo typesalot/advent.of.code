@@ -18,7 +18,7 @@
 | 14  | :green_circle: | :green_circle:  |
 | 15  | :green_circle: | :black_circle:  |
 | 16  | :green_circle: | :black_circle:  |
-| 17  | :black_circle: | :black_circle:  |
+| 17  | :green_circle: | :black_circle:  |
 | 18  | :black_circle: | :black_circle:  |
 | 19  | :black_circle: | :black_circle:  |
 | 20  | :black_circle: | :black_circle:  |
@@ -60,3 +60,4 @@ I solved with a slightly modified dijkstra that included the change in direction
 
 ### Day 17: Chronospatial Computer
 
+Quite a fun 3-bit cpu.
