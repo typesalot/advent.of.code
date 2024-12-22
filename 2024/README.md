@@ -56,3 +56,4 @@ Moving boxes; fun puzzle.
 
 ### Day 16: Reindeer Maze
 
+I solved with a slightly modified dijkstra that included the change in direction as an added cost. The extra 1000 turning weight really makes the algorithm want to exhaust all the straight paths. It is pretty entertaining to watch.

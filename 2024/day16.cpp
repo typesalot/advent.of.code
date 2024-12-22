@@ -3,6 +3,7 @@
 #include "util/term.h"
 #include <array>
 #include <cmath>
+#include <fstream>
 #include <gtest/gtest.h>
 #include <queue>
 #include <sstream>
@@ -183,4 +184,9 @@ TEST_F(Day16, Part1Example) {
 }
 
 TEST_F(Day16, Part1) {
+  auto f = ifstream(getInputFile(2024, 16));
+  readInput(f);
+
+  uint32_t cost = getMinCostPath();
+  EXPECT_EQ(cost, 99488);
 }
