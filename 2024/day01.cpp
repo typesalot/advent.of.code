@@ -1,4 +1,6 @@
 #include "common.h"
+#include "util/string.h"
+#include <algorithm>
 
 int calcListDistance(vector<int>& list1, vector<int>& list2) {
   int distance = 0;

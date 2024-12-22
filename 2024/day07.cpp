@@ -1,4 +1,5 @@
 #include "common.h"
+#include "util/string.h"
 
 struct Day7 : public ::testing::Test {
   protected:

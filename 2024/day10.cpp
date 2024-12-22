@@ -1,4 +1,5 @@
 #include "common.h"
+#include "util/term.h"
 
 class Day10 : public ::testing::Test {
   protected:

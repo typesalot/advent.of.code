@@ -60,12 +60,6 @@ class Day15 : public ::testing::Test {
       }
     }
 
-    template <>
-    void readInput(string& s) {
-      auto input = istringstream(s);
-      readInput(input);
-    }
-
     void move(const point& offset) {
       auto adjusted = robot + offset;
       char c        = map[adjusted.y][adjusted.x];
@@ -129,6 +123,12 @@ class Day15 : public ::testing::Test {
       return total;
     }
 };
+
+template <>
+void Day15::readInput(string& s) {
+  auto input = istringstream(s);
+  readInput(input);
+}
 
 TEST_F(Day15, PushLeft) {
   string s;

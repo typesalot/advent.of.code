@@ -17,7 +17,7 @@
 | 13  | :green_circle: | :black_circle:  |
 | 14  | :green_circle: | :green_circle:  |
 | 15  | :green_circle: | :black_circle:  |
-| 16  | :black_circle: | :black_circle:  |
+| 16  | :green_circle: | :black_circle:  |
 | 17  | :black_circle: | :black_circle:  |
 | 18  | :black_circle: | :black_circle:  |
 | 19  | :black_circle: | :black_circle:  |
@@ -57,3 +57,6 @@ Moving boxes; fun puzzle.
 ### Day 16: Reindeer Maze
 
 I solved with a slightly modified dijkstra that included the change in direction as an added cost. The extra 1000 turning weight really makes the algorithm want to exhaust all the straight paths. It is pretty entertaining to watch.
+
+### Day 17: Chronospatial Computer
+

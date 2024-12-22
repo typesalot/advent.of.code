@@ -1,4 +1,5 @@
 #include "common.h"
+#include "util/string.h"
 
 int _numSafeReportsWithTolerance(const vector<vector<int>>& reports);
 

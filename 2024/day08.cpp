@@ -1,4 +1,6 @@
 #include "common.h"
+#include "util/point.h"
+#include <format>
 
 class Day8 : public ::testing::Test {
     using point = point_uint;

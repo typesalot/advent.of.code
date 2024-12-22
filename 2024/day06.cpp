@@ -1,4 +1,6 @@
 #include "common.h"
+#include "util/point.h"
+#include <algorithm>
 
 vector<string> readInput() {
   vector<string> input;

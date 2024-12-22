@@ -1,4 +1,5 @@
 #include "common.h"
+#include "util/point.h"
 
 class Day13 : public ::testing::Test {
   protected:

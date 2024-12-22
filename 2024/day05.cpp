@@ -1,4 +1,9 @@
 #include "common.h"
+#include "util/string.h"
+#include "util/timer.h"
+#include <algorithm>
+#include <queue>
+#include <unordered_set>
 
 using rules_t   = unordered_map<int, vector<int>>;
 using updates_t = vector<vector<int>>;

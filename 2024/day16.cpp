@@ -211,8 +211,6 @@ TEST_F(Day16, Part2Example) {
       "###############\n";
   readInput(s);
 
-  all_paths = true;
-
   uint32_t cost = getMinCostPath();
   EXPECT_EQ(cost, 7036);
 }

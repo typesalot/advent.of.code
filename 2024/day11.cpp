@@ -1,4 +1,5 @@
 #include "common.h"
+#include "util/string.h"
 
 class Day11 : public testing::Test {
   protected:
