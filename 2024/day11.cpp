@@ -1,5 +1,7 @@
-#include "common.h"
+#include "test.h"
 #include "util/string.h"
+
+using namespace std;
 
 class Day11 : public testing::Test {
   protected:

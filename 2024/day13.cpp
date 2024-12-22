@@ -1,5 +1,7 @@
-#include "common.h"
+#include "test.h"
 #include "util/point.h"
+
+using namespace std;
 
 class Day13 : public ::testing::Test {
   protected:

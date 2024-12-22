@@ -1,3 +1,4 @@
+#include "test.h"
 #include "util/config.h"
 #include "util/point.h"
 #include "util/string.h"

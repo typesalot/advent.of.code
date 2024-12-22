@@ -1,9 +1,11 @@
-#include "common.h"
+#include "test.h"
 #include "util/point.h"
 #include "util/term.h"
 #include <bitset>
 #include <queue>
 #include <stack>
+
+using namespace std;
 
 class Day12 : public testing::Test {
   protected:

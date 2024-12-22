@@ -1,113 +1,112 @@
-#include "common.h"
+#include "test.h"
 
-void readInput(const string& filename, vector<string>& output) {
-  stringstream s;
-  string       tmp;
+using namespace std;
 
-  auto f = ifstream(filename);
-  while (getline(f, tmp))
-    output.emplace_back(tmp);
-}
+class Day4 : public aoc_2024 {
+  protected:
+    vector<string> puzzle;
 
-int countXmas(const vector<string>& input) {
-  int cnt = 0;
-  int h   = input.size();
-  int w   = input[0].length();
+    void LoadInput(istringstream& input) override {
+      string s;
+      while (getline(input, s))
+        puzzle.emplace_back(s);
+    }
 
-  for (int j = 0; j < h; j++)
-    for (int i = 0; i < w; i++)
-      if (input[j][i] == 'X') {
-        if (i >= 3 && input[j][i - 1] == 'M' && input[j][i - 2] == 'A' && input[j][i - 3] == 'S')
-          cnt++;
-        if (i + 3 < w && input[j][i + 1] == 'M' && input[j][i + 2] == 'A' && input[j][i + 3] == 'S')
-          cnt++;
-        if (j >= 3 && input[j - 1][i] == 'M' && input[j - 2][i] == 'A' && input[j - 3][i] == 'S')
-          cnt++;
-        if (j + 3 < h && input[j + 1][i] == 'M' && input[j + 2][i] == 'A' && input[j + 3][i] == 'S')
-          cnt++;
-        if (j >= 3 && i + 3 < w && input[j - 1][i + 1] == 'M' && input[j - 2][i + 2] == 'A' &&
-            input[j - 3][i + 3] == 'S')
-          cnt++;
-        if (j + 3 < h && i + 3 < w && input[j + 1][i + 1] == 'M' && input[j + 2][i + 2] == 'A' &&
-            input[j + 3][i + 3] == 'S')
-          cnt++;
-        if (j + 3 < h && i >= 3 && input[j + 1][i - 1] == 'M' && input[j + 2][i - 2] == 'A' &&
-            input[j + 3][i - 3] == 'S')
-          cnt++;
-        if (j >= 3 && i >= 3 && input[j - 1][i - 1] == 'M' && input[j - 2][i - 2] == 'A' && input[j - 3][i - 3] == 'S')
-          cnt++;
-      }
+    int countXmas() {
+      int cnt = 0;
+      int h   = puzzle.size();
+      int w   = puzzle[0].length();
 
-  return cnt;
-}
+      for (int j = 0; j < h; j++)
+        for (int i = 0; i < w; i++)
+          if (puzzle[j][i] == 'X') {
+            if (i >= 3 && puzzle[j][i - 1] == 'M' && puzzle[j][i - 2] == 'A' && puzzle[j][i - 3] == 'S')
+              cnt++;
+            if (i + 3 < w && puzzle[j][i + 1] == 'M' && puzzle[j][i + 2] == 'A' && puzzle[j][i + 3] == 'S')
+              cnt++;
+            if (j >= 3 && puzzle[j - 1][i] == 'M' && puzzle[j - 2][i] == 'A' && puzzle[j - 3][i] == 'S')
+              cnt++;
+            if (j + 3 < h && puzzle[j + 1][i] == 'M' && puzzle[j + 2][i] == 'A' && puzzle[j + 3][i] == 'S')
+              cnt++;
+            if (j >= 3 && i + 3 < w && puzzle[j - 1][i + 1] == 'M' && puzzle[j - 2][i + 2] == 'A' &&
+                puzzle[j - 3][i + 3] == 'S')
+              cnt++;
+            if (j + 3 < h && i + 3 < w && puzzle[j + 1][i + 1] == 'M' && puzzle[j + 2][i + 2] == 'A' &&
+                puzzle[j + 3][i + 3] == 'S')
+              cnt++;
+            if (j + 3 < h && i >= 3 && puzzle[j + 1][i - 1] == 'M' && puzzle[j + 2][i - 2] == 'A' &&
+                puzzle[j + 3][i - 3] == 'S')
+              cnt++;
+            if (j >= 3 && i >= 3 && puzzle[j - 1][i - 1] == 'M' && puzzle[j - 2][i - 2] == 'A' &&
+                puzzle[j - 3][i - 3] == 'S')
+              cnt++;
+          }
 
-int countCrossMas(const vector<string>& input) {
-  int cnt = 0;
-  for (int j = 1; j < input.size() - 1; j++)
-    for (int i = 1; i < input[0].length() - 1; i++)
-      if (input[j][i] == 'A') {
-        bool forward_mas =
-            // --                           ++
-            (input[j - 1][i - 1] == 'M' && input[j + 1][i + 1] == 'S') ||
-            (input[j - 1][i - 1] == 'S' && input[j + 1][i + 1] == 'M');
-        bool back_mas =
-            // +-                           -+
-            (input[j + 1][i - 1] == 'M' && input[j - 1][i + 1] == 'S') ||
-            (input[j + 1][i - 1] == 'S' && input[j - 1][i + 1] == 'M');
-        if (forward_mas && back_mas)
-          cnt++;
-      }
-  return cnt;
-}
+      return cnt;
+    }
 
-TEST(Day4, Part1Examples) {
-  vector<string> input = {
+    int countCrossMas() {
+      int cnt = 0;
+      for (int j = 1; j < puzzle.size() - 1; j++)
+        for (int i = 1; i < puzzle[0].length() - 1; i++)
+          if (puzzle[j][i] == 'A') {
+            bool forward_mas =
+                // --                           ++
+                (puzzle[j - 1][i - 1] == 'M' && puzzle[j + 1][i + 1] == 'S') ||
+                (puzzle[j - 1][i - 1] == 'S' && puzzle[j + 1][i + 1] == 'M');
+            bool back_mas =
+                // +-                           -+
+                (puzzle[j + 1][i - 1] == 'M' && puzzle[j - 1][i + 1] == 'S') ||
+                (puzzle[j + 1][i - 1] == 'S' && puzzle[j - 1][i + 1] == 'M');
+            if (forward_mas && back_mas)
+              cnt++;
+          }
+      return cnt;
+    }
+};
+
+TEST_F(Day4, Part1Examples) {
+  input =
       // 0123456789
-      "MMMSXXMASM",  // 0
-      "MSAMXMSMSA",  // 1
-      "AMXSXMAAMM",  // 2
-      "MSAMASMSMX",  // 3
-      "XMASAMXAMM",  // 4
-      "XXAMMXXAMA",  // 5
-      "SMSMSASXSS",  // 6
-      "SAXAMASAAA",  // 7
-      "MAMMMXMMMM",  // 8
-      "MXMXAXMASX"   // 9
-  };
+      "MMMSXXMASM\n"  // 0
+      "MSAMXMSMSA\n"  // 1
+      "AMXSXMAAMM\n"  // 2
+      "MSAMASMSMX\n"  // 3
+      "XMASAMXAMM\n"  // 4
+      "XXAMMXXAMA\n"  // 5
+      "SMSMSASXSS\n"  // 6
+      "SAXAMASAAA\n"  // 7
+      "MAMMMXMMMM\n"  // 8
+      "MXMXAXMASX";   // 9
+  SetUp();
 
-  EXPECT_EQ(countXmas(input), 18);
+  EXPECT_EQ(countXmas(), 18);
 }
 
-TEST(Day4, Part2Examples) {
-  vector<string> input = {
-      // 0123456789
-      "MMMSXXMASM",  // 0
-      "MSAMXMSMSA",  // 1
-      "AMXSXMAAMM",  // 2
-      "MSAMASMSMX",  // 3
-      "XMASAMXAMM",  // 4
-      "XXAMMXXAMA",  // 5
-      "SMSMSASXSS",  // 6
-      "SAXAMASAAA",  // 7
-      "MAMMMXMMMM",  // 8
-      "MXMXAXMASX"   // 9
-  };
-
-  EXPECT_EQ(countCrossMas(input), 9);
-}
-
-TEST(Day4, Part1) {
-  vector<string> input;
-  readInput(getInputFile(2024, 4), input);
-  int answer = countXmas(input);
+TEST_F(Day4, Part1) {
+  int answer = countXmas();
   EXPECT_EQ(answer, 2370);
-  cout << "Answer = " << answer << endl;
 }
 
-TEST(Day4, Part2) {
-  vector<string> input;
-  readInput(getInputFile(2024, 4), input);
-  int answer = countCrossMas(input);
+TEST_F(Day4, Part2Examples) {
+  input =
+      // 0123456789
+      "MMMSXXMASM\n"  // 0
+      "MSAMXMSMSA\n"  // 1
+      "AMXSXMAAMM\n"  // 2
+      "MSAMASMSMX\n"  // 3
+      "XMASAMXAMM\n"  // 4
+      "XXAMMXXAMA\n"  // 5
+      "SMSMSASXSS\n"  // 6
+      "SAXAMASAAA\n"  // 7
+      "MAMMMXMMMM\n"  // 8
+      "MXMXAXMASX";   // 9
+  SetUp();
+
+  EXPECT_EQ(countCrossMas(), 9);
+}
+
+TEST_F(Day4, Part2) {
+  int answer = countCrossMas();
   EXPECT_EQ(answer, 1908);
-  cout << "Answer = " << answer << endl;
 }

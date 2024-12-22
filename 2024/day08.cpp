@@ -1,6 +1,8 @@
-#include "common.h"
+#include "test.h"
 #include "util/point.h"
 #include <format>
+
+using namespace std;
 
 class Day8 : public ::testing::Test {
     using point = point_uint;
@@ -132,13 +134,11 @@ TEST_F(Day8, Part1Example) {
 
   int answer = numAntinodes(false);
   EXPECT_EQ(answer, 14);
-  cout << "Answer = " << answer << endl;
 }
 
 TEST_F(Day8, Part1) {
   int answer = numAntinodes(false);
-  EXPECT_EQ(answer, 222);  //< too large
-  cout << "Answer = " << answer << endl;
+  EXPECT_EQ(answer, 222);
 }
 
 TEST_F(Day8, Part2Example) {
@@ -162,11 +162,9 @@ TEST_F(Day8, Part2Example) {
 
   int answer = numAntinodes(true);
   EXPECT_EQ(answer, 34);
-  cout << "Answer = " << answer << endl;
 }
 
 TEST_F(Day8, Part2) {
   int answer = numAntinodes(true);
   EXPECT_EQ(answer, 884);
-  cout << "Answer = " << answer << endl;
 }

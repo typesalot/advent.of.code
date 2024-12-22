@@ -1,6 +1,9 @@
-#include "common.h"
+#include "test.h"
 #include <filesystem>
 #include <format>
+#include <stdexcept>
+
+using namespace std;
 
 bool parse_commandline(int argc, char** argv);
 

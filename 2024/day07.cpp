@@ -1,5 +1,7 @@
-#include "common.h"
+#include "test.h"
 #include "util/string.h"
+
+using namespace std;
 
 struct Day7 : public ::testing::Test {
   protected:
@@ -130,13 +132,11 @@ TEST_F(Day7, Part1Examples) {
 
   uint64_t answer = calcValidEquations(input);
   EXPECT_EQ(answer, 3749);
-  cout << "Answer = " << answer << endl;
 }
 
 TEST_F(Day7, Part1) {
   uint64_t answer = calcValidEquations(input);
   EXPECT_EQ(answer, 4364915411363);
-  cout << "Answer = " << answer << endl;
 }
 
 TEST_F(Day7, Part2Examples) {
@@ -158,7 +158,6 @@ TEST_F(Day7, Part2Examples) {
 
   uint64_t answer = calcValidEquations(input);
   EXPECT_EQ(answer, 11387);
-  cout << "Answer = " << answer << endl;
 }
 
 TEST_F(Day7, Part2) {
@@ -166,6 +165,4 @@ TEST_F(Day7, Part2) {
 
   uint64_t answer = calcValidEquations(input);
   EXPECT_EQ(answer, 38322057216320);
-  cout << "Answer = " << answer << endl;
-  cout << "Checks = " << checks << endl;
 }

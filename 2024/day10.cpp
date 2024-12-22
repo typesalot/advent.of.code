@@ -1,5 +1,8 @@
-#include "common.h"
+#include "test.h"
 #include "util/term.h"
+#include <unordered_map>
+#include <vector>
+using namespace std;
 
 class Day10 : public ::testing::Test {
   protected:

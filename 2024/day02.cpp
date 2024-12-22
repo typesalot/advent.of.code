@@ -1,112 +1,111 @@
-#include "common.h"
+#include "test.h"
 #include "util/string.h"
 
-int _numSafeReportsWithTolerance(const vector<vector<int>>& reports);
+using namespace std;
 
-void readInput(const string& input, vector<vector<int>>& reports) {
-  auto   f = ifstream(input);
-  string line;
-  while (getline(f, line)) {
-    auto         elems  = split(line, ' ');
-    vector<int>& report = reports.emplace_back();
-    for (auto e : elems)
-      report.emplace_back(stoi(e));
-  }
-}
+class Day2 : public aoc_2024 {
+  protected:
+    vector<vector<int>> reports;
 
-std::tuple<bool, int> isSafe(const vector<int>& report, int skip = -1) {
-  bool safe = false;
+    void LoadInput(istringstream& input) override {
+      string line;
+      while (getline(input, line)) {
+        auto         elems  = split(line, ' ');
+        vector<int>& report = reports.emplace_back();
+        for (auto e : elems)
+          report.emplace_back(stoi(e));
+      }
+    }
 
-  bool ltz     = false;
-  bool ltz_set = false;
-  int  i       = 0;
-  int  j       = 0;
+    std::tuple<bool, int> isSafe(const vector<int>& report, int skip = -1) {
+      bool safe = false;
 
-  for (i = 0; i < report.size() - 1; i++) {
-    // Boundary conditions for skipping an element contribution; used in part2
-    if (skip != -1) {
-      if (i == skip)
-        continue;
-      j = i + 1;
-      if (j == skip)
-        j++;
-      if (j == report.size())
-        continue;
-    } else
-      j = i + 1;
+      bool ltz     = false;
+      bool ltz_set = false;
+      int  i       = 0;
+      int  j       = 0;
 
-    int grad = report[i] - report[j];
+      for (i = 0; i < report.size() - 1; i++) {
+        // Boundary conditions for skipping an element contribution; used in part2
+        if (skip != -1) {
+          if (i == skip)
+            continue;
+          j = i + 1;
+          if (j == skip)
+            j++;
+          if (j == report.size())
+            continue;
+        } else
+          j = i + 1;
 
-    // check1: gradient magnitude
-    if (grad > 3 || grad < -3 || grad == 0)
-      break;
+        int grad = report[i] - report[j];
 
-    // check1: direction
-    if (!ltz_set) {
-      ltz     = grad < 0;
-      ltz_set = true;
-    } else if (ltz && grad > 0)
-      break;
-    else if (!ltz && grad < 0)
-      break;
-  }
+        // check1: gradient magnitude
+        if (grad > 3 || grad < -3 || grad == 0)
+          break;
 
-  safe = (i == report.size() - 1);
+        // check1: direction
+        if (!ltz_set) {
+          ltz     = grad < 0;
+          ltz_set = true;
+        } else if (ltz && grad > 0)
+          break;
+        else if (!ltz && grad < 0)
+          break;
+      }
 
-  return {safe, i};
-}
+      safe = (i == report.size() - 1);
 
-int numSafeReports(const string& input) {
-  vector<vector<int>> reports;
-  readInput(input, reports);
+      return {safe, i};
+    }
 
-  int safe = 0;
+    int numSafeReports() {
+      int safe = 0;
 
-  for (const auto& report : reports) {
-    auto [is_safe, i] = isSafe(report);
-    if (is_safe)
-      safe++;
-  }
+      for (const auto& report : reports) {
+        auto [is_safe, i] = isSafe(report);
+        if (is_safe)
+          safe++;
+      }
 
-  return safe;
-}
+      return safe;
+    }
 
-int numSafeReportsWithTolerance(const string& input) {
-  vector<vector<int>> reports;
-  readInput(input, reports);
-  return _numSafeReportsWithTolerance(reports);
-}
+    int numSafeReportsWithTolerance() {
+      return _numSafeReportsWithTolerance(reports);
+    }
 
-int _numSafeReportsWithTolerance(const vector<vector<int>>& reports) {
-  int safe = 0;
+    int _numSafeReportsWithTolerance(const vector<vector<int>>& reports) {
+      int safe = 0;
 
-  int tmp;
-  for (const auto& report : reports) {
-    auto [is_safe, i] = isSafe(report);
-    if (!is_safe) {
-      // safety window = [i-1,i,i+1]
-      // corner case: removing i-1, but only for i=1 when removing the 0th element might make a safe gradient
-      if (i == 1)
-        tie(is_safe, tmp) = isSafe(report, i - 1);
+      int tmp;
+      for (const auto& report : reports) {
+        auto [is_safe, i] = isSafe(report);
+        if (!is_safe) {
+          // safety window = [i-1,i,i+1]
+          // corner case: removing i-1, but only for i=1 when removing the 0th element might make a safe gradient
+          if (i == 1)
+            tie(is_safe, tmp) = isSafe(report, i - 1);
 
-      // common case 1: removing i makes i-1 -> i+1 safe
-      if (!is_safe)
-        tie(is_safe, tmp) = isSafe(report, i);
+          // common case 1: removing i makes i-1 -> i+1 safe
+          if (!is_safe)
+            tie(is_safe, tmp) = isSafe(report, i);
 
-      // common case 2: removing i+1 makes i-1 -> i safe
-      if (!is_safe)
-        tie(is_safe, tmp) = isSafe(report, i + 1);
+          // common case 2: removing i+1 makes i-1 -> i safe
+          if (!is_safe)
+            tie(is_safe, tmp) = isSafe(report, i + 1);
 
-      if (is_safe)
-        safe++;
-    } else
-      safe++;
-  }
+          if (is_safe)
+            safe++;
+        } else
+          safe++;
+      }
 
-  return safe;
-}
+      return safe;
+    }
+};
 
-TEST(Day2, Examples) {
+TEST_F(Day2, Examples) {
   EXPECT_EQ(_numSafeReportsWithTolerance({{7, 6, 4, 2, 1}}), 1);  // Safe without removing any level.
   EXPECT_EQ(_numSafeReportsWithTolerance({{1, 2, 7, 8, 9}}), 0);  // Unsafe regardless of which level is removed.
   EXPECT_EQ(_numSafeReportsWithTolerance({{9, 7, 6, 2, 1}}), 0);  // Unsafe regardless of which level is removed.
@@ -119,14 +118,12 @@ TEST(Day2, Examples) {
             1);  // Removing the first element makes safe gradient
 }
 
-TEST(Day2, Part1) {
-  int answer = numSafeReports(getInputFile(2024, 2));
+TEST_F(Day2, Part1) {
+  int answer = numSafeReports();
   EXPECT_EQ(answer, 220);
-  cout << "Answer = " << answer << endl;
 }
 
-TEST(Day2, Part2) {
-  int answer = numSafeReportsWithTolerance(getInputFile(2024, 2));
+TEST_F(Day2, Part2) {
+  int answer = numSafeReportsWithTolerance();
   EXPECT_EQ(answer, 296);
-  cout << "Answer = " << answer << endl;
 }

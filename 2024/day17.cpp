@@ -1,4 +1,6 @@
-#include "common.h"
+#include "test.h"
+
+using namespace std;
 
 class Day17 : public aoc_2024 {
   public:

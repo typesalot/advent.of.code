@@ -1,4 +1,7 @@
-#include "common.h"
+#include "test.h"
+#include <limits>
+#include <string>
+using namespace std;
 
 class Day9 : public testing::Test {
   protected:
@@ -296,7 +299,6 @@ TEST_F(Day9, Part1) {
 
   uint64_t checksum = getChecksum();
   EXPECT_EQ(checksum, 6242766523059);
-  cout << "Answer = " << checksum << endl;
 }
 
 TEST_F(Day9, Part2Example) {
@@ -322,6 +324,5 @@ TEST_F(Day9, Part2) {
   EXPECT_EQ(s_before, s_after);
 
   uint64_t checksum = getChecksum();
-  EXPECT_EQ(checksum, 6272188244509);  // too low
-  cout << "Answer = " << checksum << endl;
+  EXPECT_EQ(checksum, 6272188244509);
 }
