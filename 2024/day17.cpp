@@ -1,5 +1,6 @@
 #include "test.h"
 #include "util/string.h"
+#include "util/term.h"
 #include <format>
 #include <functional>
 #include <source_location>
@@ -17,10 +18,41 @@ class Day17 : public aoc_2024 {
         uint32_t c;
         uint32_t ip = 0;
 
+        unique_ptr<reg_t> last = nullptr;
+
         void print() {
-          cout << format("{:>8} = {:10} {:032b}\n", "A", a, a);
-          cout << format("{:>8} = {:10} {:032b}\n", "B", b, b);
-          cout << format("{:>8} = {:10} {:032b}\n", "C", c, c);
+          term::string s;
+          uint32_t     y = 10;
+          uint32_t     x = 8 + 10 + 32 + 6;
+
+          cout << term::cursor::save();
+
+          s = format("{:>8} = {:10} {:032b}\n", "A", a, a);
+          if (last && a != last->a)
+            s.fg_red();
+          cout << term::cursor::move(y, x);
+          cout << s;
+
+          s = format("{:>8} = {:10} {:032b}\n", "B", b, b);
+          if (last && b != last->b)
+            s.fg_red();
+          cout << term::cursor::set_x(x);
+          cout << s;
+
+          s = format("{:>8} = {:10} {:032b}\n", "C", c, c);
+          if (last && c != last->c)
+            s.fg_red();
+
+          cout << term::cursor::set_x(x);
+          cout << s;
+
+          cout << term::cursor::restore();
+
+          if (last == nullptr)
+            last = make_unique<reg_t>();
+          last->a = a;
+          last->b = b;
+          last->c = c;
         }
     } reg;
 
@@ -101,16 +133,23 @@ class Day17 : public aoc_2024 {
     };
 
     // 0 - division; A = A / ( 1 << combo ) truncated
+    // A = A >> combo()
     void adv() {
-      uint32_t value = combo();
-
       if (g_config.debug) {
-        auto name = source_location::current().function_name();
-        cout << name << format(" -> A = A / ( 1 << {} ) = {}\n", value, reg.a / (1 << value));
+        string   cstr  = combo_string();
+        uint32_t value = combo();
+        reg.ip--;
+
+        if (cstr == to_string(value))
+          cout << format("[adv] A = A >> {}\n", cstr);
+        else
+          cout << format("[adv] A = A >> {} = A >> {}\n", cstr, value);
         cout << format("{:>8} = {:10} {:032b}\n", "A", reg.a, reg.a);
-        cout << format("{:>8} = {:10} {:032b}\n", "Value", value, value);
-        cout << format("{:>8} = {:10} {:032b}\n\n", "DIV", reg.a / (1 << value), reg.a / (1 << value));
+        cout << format("{:>8} = {:10} {:032b}\n", cstr, value, value);
+        cout << format("{:>8} = {:10} {:032b}\n\n", ">>", reg.a / (1 << value), reg.a / (1 << value));
       }
+
+      uint32_t value = combo();
 
       reg.a = reg.a / (1 << value);
 
@@ -120,17 +159,18 @@ class Day17 : public aoc_2024 {
 
     // 1 - bitwise XOR; B ^ literal operand
     void bxl() {
-      uint32_t value = literal();
-
       if (g_config.debug) {
-        auto name = source_location::current().function_name();
-        cout << name << format(" -> B = B ^ {} = {}\n", value, reg.b ^ value);
+        uint32_t value = literal();
+        reg.ip--;
+
+        cout << format("[bxl] B = B ^ {}\n", value);
         cout << format("{:>8} = {:10} {:032b}\n", "B", reg.b, reg.b);
-        cout << format("{:>8} = {:10} {:032b}\n", "Value", value, value);
-        cout << format("{:>8} = {:10} {:032b}\n\n", "XOR", reg.b ^ value, reg.b ^ value);
+        cout << format("{:>8} = {:10} {:032b}\n", value, value, value);
+        cout << format("{:>8} = {:10} {:032b}\n\n", "^", reg.b ^ value, reg.b ^ value);
       }
 
-      reg.b = reg.b ^ value;
+      uint32_t value = literal();
+      reg.b          = reg.b ^ value;
 
       if (g_config.debug)
         reg.print();
@@ -139,14 +179,17 @@ class Day17 : public aoc_2024 {
     // 2 - bitwise mod8; B = combo % 8
     void bst() {
       if (g_config.debug) {
-        auto combo_str = combo_string();
-        auto value     = combo();
-        auto name      = source_location::current().function_name();
-        cout << name << format(" -> B = {} % 8 -> get the lower 3 bits of {}\n", combo_str, combo_str);
-        cout << format("{:>8} = {:10} {:032b}\n", combo_str, value, value);
+        auto cstr  = combo_string();
+        auto value = combo();
+        reg.ip--;
+
+        if (cstr == to_string(value))
+          cout << format("[bst] B = {} % 8 = \n", cstr);
+        else
+          cout << format("[bst] B = {} % 8 = {} % 8 \n", cstr, value);
+        cout << format("{:>8} = {:10} {:032b}\n", cstr, value, value);
         cout << format("{:>8} = {:10} {:032b}\n", "8", 8, 8);
         cout << format("{:>8} = {:10} {:032b}\n\n", "%", value % 8, value % 8);
-        reg.ip--;
       }
 
       uint32_t value = combo();
@@ -158,8 +201,13 @@ class Day17 : public aoc_2024 {
 
     // 3 - jump-not-zero; nop if A == 0 else ip = literal
     void jnz() {
-      if (g_config.debug)
-        cout << source_location::current().function_name() << endl;
+      if (g_config.debug) {
+        uint32_t value = literal();
+        reg.ip--;
+
+        cout << format("[jnz] {}", value) << endl;
+        cout << format("{:>8} = {:10} {:032b}\n", "A", reg.a, reg.a);
+      }
 
       uint32_t value = literal();
       if (!reg.a)
@@ -170,14 +218,13 @@ class Day17 : public aoc_2024 {
     // 4 - bitwise XOR (legacy); B = B ^ C
     void bxc() {
       if (g_config.debug) {
-        auto name = source_location::current().function_name();
-        cout << name << format(" -> B = B ^ C\n");
+        cout << format("[bxc] B = B ^ C\n");
         cout << format("{:>8} = {:10} {:032b}\n", "B", reg.b, reg.b);
         cout << format("{:>8} = {:10} {:032b}\n", "C", reg.c, reg.c);
-        cout << format("{:>8} = {:10} {:032b}\n\n", "XOR", reg.b ^ reg.c, reg.b ^ reg.c);
+        cout << format("{:>8} = {:10} {:032b}\n\n", "^", reg.b ^ reg.c, reg.b ^ reg.c);
       }
 
-      literal();  // reads, but ignores ("legacy" reason is probably because adv reads a combo)
+      literal();
       reg.b = reg.b ^ reg.c;
 
       if (g_config.debug)
@@ -186,15 +233,21 @@ class Day17 : public aoc_2024 {
 
     // 5 - saves output; output.push( combo % 8 )
     void out() {
-      uint32_t value = combo();
-
       if (g_config.debug) {
-        auto name = source_location::current().function_name();
-        cout << name << format(" -> Value % 8\n");
-        cout << format("{:>8} = {:10} {:032b}\n", "Value", value, value);
-        cout << format("{:>8} = {:10} {:032b}\n", "% 8", value % 8, value % 8);
+        string   cstr  = combo_string();
+        uint32_t value = combo();
+        reg.ip--;
+
+        if (cstr == to_string(value))
+          cout << format("[out] {} % 8\n", value);
+        else
+          cout << format("[out] {} % 8 = {} % 8 \n", cstr, value);
+        cout << format("{:>8} = {:10} {:032b}\n", cstr, value, value);
+        cout << format("{:>8} = {:10} {:032b}\n", "8", 8, 8);
+        cout << format("{:>8} = {:10} {:032b}\n", "%", value % 8, value % 8);
       }
 
+      uint32_t value = combo();
       value %= 8;
 
       if (find_copy) {
@@ -208,27 +261,45 @@ class Day17 : public aoc_2024 {
     }
 
     // 6 - division; B = A / ( 1 << combo ) truncated
+    // B = A >> combo()
     void bdv() {
-      if (g_config.debug)
-        cout << source_location::current().function_name() << endl;
+      if (g_config.debug) {
+        string   cstr  = combo_string();
+        uint32_t value = combo();
+        reg.ip--;
+
+        if (cstr == to_string(value))
+          cout << format("[bdv] B = A >> {}\n", cstr);
+        else
+          cout << format("[bdv] B = A >> {} = A >> {}\n", cstr, value);
+        cout << format("{:>8} = {:10} {:032b}\n", "A", reg.a, reg.a);
+        cout << format("{:>8} = {:10} {:032b}\n", cstr, value, value);
+        cout << format("{:>8} = {:10} {:032b}\n\n", ">>", reg.a / (1 << value), reg.a / (1 << value));
+      }
 
       uint32_t value = combo();
       reg.b          = reg.a / (1 << value);
     }
 
     // 7 - division; C = A / ( 1 << combo ) truncated
+    // C = A >> combo()
     void cdv() {
-      uint32_t value = combo();
-
       if (g_config.debug) {
-        auto name = source_location::current().function_name();
-        cout << name << format(" -> C = A / ( 1 << {} ) = {}\n", value, reg.a / (1 << value));
+        string   cstr  = combo_string();
+        uint32_t value = combo();
+        reg.ip--;
+
+        if (cstr == to_string(value))
+          cout << format("[cdv] C = A >> {}\n", cstr);
+        else
+          cout << format("[cdv] C = A >> {} = A >> {}\n", cstr, value);
         cout << format("{:>8} = {:10} {:032b}\n", "A", reg.a, reg.a);
-        cout << format("{:>8} = {:10} {:032b}\n", "Value", value, value);
-        cout << format("{:>8} = {:10} {:032b}\n\n", "DIV", reg.a / (1 << value), reg.a / (1 << value));
+        cout << format("{:>8} = {:10} {:032b}\n", cstr, value, value);
+        cout << format("{:>8} = {:10} {:032b}\n\n", ">>", reg.a / (1 << value), reg.a / (1 << value));
       }
 
-      reg.c = reg.a / (1 << value);
+      uint32_t value = combo();
+      reg.c          = reg.a / (1 << value);
 
       if (g_config.debug)
         reg.print();
