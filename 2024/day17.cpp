@@ -1,8 +1,10 @@
 #include "test.h"
 #include "util/string.h"
 #include "util/term.h"
+#include <bitset>
 #include <format>
 #include <functional>
+#include <queue>
 #include <source_location>
 #include <vector>
 
@@ -385,7 +387,64 @@ TEST_F(Day17, Part2Example) {
 }
 
 TEST_F(Day17, Part2) {
-  reg.a = 0;
+  reg.a = 5522;
+
+  auto print_a = [](uint32_t a_value, uint32_t a_mask) {
+    cout << format("{:>10} = {:10} {:032b}\n", "A mask", a_mask, a_mask);
+    cout << format("{:>10} = {:10} ", "A value", "");
+    uint32_t print_mask = 1 << 31;
+    while (print_mask) {
+      if (a_mask & print_mask) {
+        if (print_mask & a_value)
+          cout << "1";
+        else
+          cout << "0";
+      } else {
+        cout << ".";
+      }
+      print_mask >>= 1;
+    }
+    cout << endl;
+  };
+
+  queue<tuple<uint32_t, uint32_t>> q;
+
+  int      p         = 0;
+  uint32_t out_match = program[p];
+
+  uint32_t mask = (1 << 3) - 1;
+  for (int i = 0; i < 8; i++)
+    q.emplace(mask, i);
+
+  while (!q.empty()) {
+    auto& a_mask  = get<0>(q.front());
+    auto& a_value = get<1>(q.front());
+    q.pop();
+
+    uint32_t b = 0;
+    uint32_t c = 0;
+
+    b                = a_value % 8;
+    b                = b ^ 5;
+    c                = a_value >> b;
+    uint32_t c_shift = b;
+    b                = b ^ 6;
+
+    uint32_t c_correct = b ^ out_match;  // correct answer
+
+    uint32_t c_test  = (c_shift >= 3) ? 3 : 3 - c_shift;
+    uint32_t c_mask  = (1 << c_test) - 1;
+    uint32_t c_check = (c_correct & c_mask) | c;
+
+    bool valid = (c_correct == c_check);
+
+    if (valid) {
+      a_value = a_value | (c_correct << c_shift);
+      a_mask  = a_mask | (0x7 << c_shift);
+
+      print_a(a_value, a_mask);
+    }
+  }
 
   execute();
 
