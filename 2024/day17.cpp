@@ -442,9 +442,21 @@ TEST_F(Day17, Part2) {
       a_value = a_value | (c_correct << c_shift);
       a_mask  = a_mask | (0x7 << c_shift);
 
+      cout << "\ncurrent:\n";
       print_a(a_value, a_mask);
+      cout << endl << "next:\n";
+
+      uint32_t c_space = min<uint32_t>(c_shift - c_test, 3);
+
+      for (int i = 0; i < (1 << c_space); i++) {
+        uint32_t tmp_val  = a_value | (i << 3);
+        uint32_t tmp_mask = a_mask | (0x7 << 3);
+        print_a(tmp_val, tmp_mask);
+      }
     }
   }
+
+  return;
 
   execute();
 
