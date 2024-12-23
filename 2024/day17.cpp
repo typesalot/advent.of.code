@@ -389,9 +389,9 @@ TEST_F(Day17, Part2Example) {
 TEST_F(Day17, Part2) {
   reg.a = 5522;
 
-  auto print_a = [](uint32_t a_value, uint32_t a_mask) {
-    cout << format("{:>10} = {:10} {:032b}\n", "A mask", a_mask, a_mask);
-    cout << format("{:>10} = {:10} ", "A value", "");
+  auto print_a = [](const string& header, uint32_t a_value, uint32_t a_mask) {
+    // cout << format("{:>10} = {:10} {:032b}\n", "A mask", a_mask, a_mask);
+    cout << format("{:>10} = ", header, "");
     uint32_t print_mask = 1 << 31;
     while (print_mask) {
       if (a_mask & print_mask) {
@@ -407,51 +407,76 @@ TEST_F(Day17, Part2) {
     cout << endl;
   };
 
-  queue<tuple<uint32_t, uint32_t>> q;
+  queue<tuple<uint32_t, uint32_t, uint32_t>> q;
 
-  int      p         = 0;
-  uint32_t out_match = program[p];
+  int p = 0;
 
   uint32_t mask = (1 << 3) - 1;
   for (int i = 0; i < 8; i++)
-    q.emplace(mask, i);
+    q.emplace(mask, i, 0);
 
-  while (!q.empty()) {
-    auto& a_mask  = get<0>(q.front());
-    auto& a_value = get<1>(q.front());
-    q.pop();
+  while (!q.empty() && p < program.size()) {
+    uint32_t size      = q.size();
+    uint32_t out_match = program[p];
+    p++;
 
-    uint32_t b = 0;
-    uint32_t c = 0;
+    cout << format("\nMatching {} in program...", out_match);
+    while (size) {
+      size--;
 
-    b                = a_value % 8;
-    b                = b ^ 5;
-    c                = a_value >> b;
-    uint32_t c_shift = b;
-    b                = b ^ 6;
+      auto a_mask  = get<0>(q.front());
+      auto a_full  = get<1>(q.front());
+      auto a_shift = get<2>(q.front());
+      q.pop();
 
-    uint32_t c_correct = b ^ out_match;  // correct answer
+      uint32_t a_value = a_full >> a_shift;
+      a_mask >>= a_shift;
 
-    uint32_t c_test  = (c_shift >= 3) ? 3 : 3 - c_shift;
-    uint32_t c_mask  = (1 << c_test) - 1;
-    uint32_t c_check = (c_correct & c_mask) | c;
+      uint32_t b = 0;
+      uint32_t c = 0;
 
-    bool valid = (c_correct == c_check);
+      b                = a_value % 8;
+      b                = b ^ 5;
+      c                = a_value >> b;
+      uint32_t c_shift = b;
+      b                = b ^ 6;
 
-    if (valid) {
-      a_value = a_value | (c_correct << c_shift);
-      a_mask  = a_mask | (0x7 << c_shift);
+      uint32_t c_correct = b ^ out_match;  // correct answer
+      uint32_t c_test    = (c_shift >= 3) ? 3 : 3 - c_shift;
+      uint32_t c_mask    = a_mask >> c_shift;
+      uint32_t c_check   = (c_correct & (~c_mask & 0x7)) | (c & 0x7);
 
-      cout << "\ncurrent:\n";
-      print_a(a_value, a_mask);
-      cout << endl << "next:\n";
+      bool valid = (c_correct == c_check);
 
-      uint32_t c_space = min<uint32_t>(c_shift - c_test, 3);
+      if (valid) {
+        a_value = a_value | (c_correct << c_shift);
+        a_mask  = a_mask | (0x7 << c_shift);
 
-      for (int i = 0; i < (1 << c_space); i++) {
-        uint32_t tmp_val  = a_value | (i << 3);
-        uint32_t tmp_mask = a_mask | (0x7 << 3);
-        print_a(tmp_val, tmp_mask);
+        cout << endl;
+        print_a("A", a_value, a_mask);
+
+        uint32_t space_count = 0;
+        uint32_t space_shift = -1;
+        for (int i = 3; i < c_shift; i++) {
+          if (!(a_mask & (1 << i))) {
+            space_count++;
+            if (space_shift == -1)
+              space_shift = i;
+          }
+        }
+        space_count = min<uint32_t>(space_count, 3);
+        if (space_count) {
+          for (int i = 0; i < (1 << space_count); i++) {
+            uint32_t tmp_val  = a_value | (i << space_shift);
+            uint32_t tmp_mask = a_mask | (0x7 << space_shift);
+
+            print_a("next", tmp_val, tmp_mask);
+            q.emplace(tmp_mask, tmp_val, 3);
+          }
+        } else {
+          print_a("next", a_value, a_mask);
+          q.emplace(a_value, a_mask, 3);
+        }
       }
     }
   }
