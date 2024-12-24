@@ -10,6 +10,8 @@
 
 using namespace std;
 
+bool execute_print_regs = false;
+
 class Day17 : public aoc_2024 {
   public:
     vector<int> output;
@@ -23,6 +25,9 @@ class Day17 : public aoc_2024 {
         unique_ptr<reg_t> last = nullptr;
 
         void print() {
+          if (!execute_print_regs)
+            return;
+
           term::string s;
           uint64_t     y = 10;
           uint64_t     x = 8 + 10 + 32 + 6;
@@ -124,7 +129,7 @@ class Day17 : public aoc_2024 {
     // 0 - division; A = A / ( 1 << combo ) truncated
     // A = A >> combo()
     void adv() {
-      if (g_config.debug) {
+      if (execute_print_regs) {
         string   cstr  = combo_string();
         uint64_t value = combo();
         reg.ip--;
@@ -144,7 +149,7 @@ class Day17 : public aoc_2024 {
 
     // 1 - bitwise XOR; B ^ literal operand
     void bxl() {
-      if (g_config.debug) {
+      if (execute_print_regs) {
         uint64_t value = literal();
         reg.ip--;
 
@@ -160,7 +165,7 @@ class Day17 : public aoc_2024 {
 
     // 2 - bitwise mod8; B = combo % 8
     void bst() {
-      if (g_config.debug) {
+      if (execute_print_regs) {
         auto cstr  = combo_string();
         auto value = combo();
         reg.ip--;
@@ -180,7 +185,7 @@ class Day17 : public aoc_2024 {
 
     // 3 - jump-not-zero; nop if A == 0 else ip = literal
     void jnz() {
-      if (g_config.debug) {
+      if (execute_print_regs) {
         uint64_t value = literal();
         reg.ip--;
 
@@ -196,7 +201,7 @@ class Day17 : public aoc_2024 {
 
     // 4 - bitwise XOR (legacy); B = B ^ C
     void bxc() {
-      if (g_config.debug) {
+      if (execute_print_regs) {
         cout << format("[bxc] B = B ^ C\n");
         cout << format("{:>8} = {:10} {:064b}\n", "B", reg.b, reg.b);
         cout << format("{:>8} = {:10} {:064b}\n", "C", reg.c, reg.c);
@@ -209,7 +214,7 @@ class Day17 : public aoc_2024 {
 
     // 5 - saves output; output.push( combo % 8 )
     void out() {
-      if (g_config.debug) {
+      if (execute_print_regs) {
         string   cstr  = combo_string();
         uint64_t value = combo();
         reg.ip--;
@@ -232,7 +237,7 @@ class Day17 : public aoc_2024 {
     // 6 - division; B = A / ( 1 << combo ) truncated
     // B = A >> combo()
     void bdv() {
-      if (g_config.debug) {
+      if (execute_print_regs) {
         string   cstr  = combo_string();
         uint64_t value = combo();
         reg.ip--;
@@ -253,7 +258,7 @@ class Day17 : public aoc_2024 {
     // 7 - division; C = A / ( 1 << combo ) truncated
     // C = A >> combo()
     void cdv() {
-      if (g_config.debug) {
+      if (execute_print_regs) {
         string   cstr  = combo_string();
         uint64_t value = combo();
         reg.ip--;
@@ -322,9 +327,20 @@ class Day17 : public aoc_2024 {
       return read();
     }
 
-    void execute() {
-      if (g_config.debug)
-        cout << term::cursor::clear();
+    void reset(uint64_t a) {
+      reg.a      = a;
+      reg.b      = 0;
+      reg.c      = 0;
+      reg.ip     = 0;
+      reg.last   = nullptr;
+      terminated = false;
+      output.clear();
+    }
+
+    string execute(uint64_t a = 0) {
+      // if (g_config.debug)
+      //   // cout << term::cursor::clear();
+      reset(a);
 
       while (!terminated) {
         int start = reg.ip;
@@ -337,14 +353,16 @@ class Day17 : public aoc_2024 {
         int end = reg.ip;
         if (inst != &Day17::jnz)
           assert(end - start == 2);
-        if (inst == &Day17::out && g_config.debug)
-          cout << term::cursor::clear();
-        if (g_config.debug)
-          reg.print();
+        // if (inst == &Day17::out && g_config.debug)
+        //   cout << term::cursor::clear();
+        // if (g_config.debug)
+        //   reg.print();
 
         if (reg.ip >= program.size())
           terminated = true;
       }
+
+      return getOutputString();
     }
 };
 
@@ -421,16 +439,17 @@ TEST_F(Day17, Part2) {
     p++;
 
     cout << format("\nMatching {} in program...", out_match);
+    cout.flush();
+
     while (size) {
       size--;
 
-      auto a_mask  = get<0>(q.front());
-      auto a_full  = get<1>(q.front());
-      auto a_shift = get<2>(q.front());
-      q.pop();
+      uint64_t a_mask  = get<0>(q.front());
+      uint64_t a_value = get<1>(q.front());
+      uint64_t a_shift = get<2>(q.front());
 
-      uint64_t a_value = a_full >> a_shift;
-      a_mask >>= a_shift;
+      a_value = a_value >> a_shift;
+      a_mask  = a_mask >> a_shift;
 
       uint64_t b = 0;
       uint64_t c = 0;
@@ -454,6 +473,7 @@ TEST_F(Day17, Part2) {
 
         cout << endl;
         print_a("A", a_value, a_mask);
+        print_a("A", a_value, -1);
 
         uint64_t space_count = 0;
         uint64_t space_shift = -1;
@@ -464,20 +484,35 @@ TEST_F(Day17, Part2) {
               space_shift = i;
           }
         }
-        space_count = min<uint64_t>(space_count, 3);
+        uint64_t space_mask = (1 << space_count) - 1;
+        // space_count = min<uint64_t>(space_count, 3);
         if (space_count) {
           for (int i = 0; i < (1 << space_count); i++) {
             uint64_t tmp_val  = a_value | (i << space_shift);
-            uint64_t tmp_mask = a_mask | (0x7 << space_shift);
+            uint64_t tmp_mask = a_mask | (space_mask << space_shift);
 
-            print_a("next", tmp_val, tmp_mask);
-            q.emplace(tmp_mask, tmp_val, 3);
+            uint64_t next      = (tmp_val << a_shift) | (get<1>(q.front()) & (1l << a_shift) - 1);
+            uint64_t next_mask = (tmp_mask << a_shift) | (get<0>(q.front()) & (1l << a_shift) - 1);
+            print_a("next", next, next_mask);
+            auto o = execute(next);
+            cout << format("{:>10} execute({}) = {}", "", next, o) << endl;
+            if (o == getProgramString())
+              assert(false);
+            q.emplace(next_mask, next, a_shift + 3);
           }
         } else {
-          print_a("next", a_value, a_mask);
-          q.emplace(a_value, a_mask, 3);
+          uint64_t next      = (a_value << a_shift) | (get<1>(q.front()) & (1l << a_shift) - 1);
+          uint64_t next_mask = (a_mask << a_shift) | (get<0>(q.front()) & (1l << a_shift) - 1);
+          print_a("next", next, next_mask);
+          auto o = execute(next);
+          cout << format("{:>10} execute({}) = {}", "", next, o) << endl;
+          if (o == getProgramString())
+            assert(false);
+          q.emplace(next_mask, next, a_shift + 3);
         }
       }
+
+      q.pop();
     }
   }
 
