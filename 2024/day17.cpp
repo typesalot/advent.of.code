@@ -15,33 +15,33 @@ class Day17 : public aoc_2024 {
     vector<int> output;
 
     struct reg_t {
-        uint32_t a;
-        uint32_t b;
-        uint32_t c;
-        uint32_t ip = 0;
+        uint64_t a;
+        uint64_t b;
+        uint64_t c;
+        uint64_t ip = 0;
 
         unique_ptr<reg_t> last = nullptr;
 
         void print() {
           term::string s;
-          uint32_t     y = 10;
-          uint32_t     x = 8 + 10 + 32 + 6;
+          uint64_t     y = 10;
+          uint64_t     x = 8 + 10 + 32 + 6;
 
           cout << term::cursor::save();
 
-          s = format("{:>8} = {:10} {:032b}\n", "A", a, a);
+          s = format("{:>8} = {:10} {:064b}\n", "A", a, a);
           if (last && a != last->a)
             s.fg_red();
           cout << term::cursor::move(y, x);
           cout << s;
 
-          s = format("{:>8} = {:10} {:032b}\n", "B", b, b);
+          s = format("{:>8} = {:10} {:064b}\n", "B", b, b);
           if (last && b != last->b)
             s.fg_red();
           cout << term::cursor::set_x(x);
           cout << s;
 
-          s = format("{:>8} = {:10} {:032b}\n", "C", c, c);
+          s = format("{:>8} = {:10} {:064b}\n", "C", c, c);
           if (last && c != last->c)
             s.fg_red();
 
@@ -58,7 +58,7 @@ class Day17 : public aoc_2024 {
         }
     } reg;
 
-    vector<uint32_t> program;
+    vector<uint64_t> program;
     bool             terminated;
 
     using function_t = void (Day17::*)();
@@ -126,35 +126,35 @@ class Day17 : public aoc_2024 {
     void adv() {
       if (g_config.debug) {
         string   cstr  = combo_string();
-        uint32_t value = combo();
+        uint64_t value = combo();
         reg.ip--;
 
         if (cstr == to_string(value))
           cout << format("[adv] A = A >> {}\n", cstr);
         else
           cout << format("[adv] A = A >> {} = A >> {}\n", cstr, value);
-        cout << format("{:>8} = {:10} {:032b}\n", "A", reg.a, reg.a);
-        cout << format("{:>8} = {:10} {:032b}\n", cstr, value, value);
-        cout << format("{:>8} = {:10} {:032b}\n\n", ">>", reg.a / (1 << value), reg.a / (1 << value));
+        cout << format("{:>8} = {:10} {:064b}\n", "A", reg.a, reg.a);
+        cout << format("{:>8} = {:10} {:064b}\n", cstr, value, value);
+        cout << format("{:>8} = {:10} {:064b}\n\n", ">>", reg.a / (1 << value), reg.a / (1 << value));
       }
 
-      uint32_t value = combo();
+      uint64_t value = combo();
       reg.a          = reg.a / (1 << value);
     }
 
     // 1 - bitwise XOR; B ^ literal operand
     void bxl() {
       if (g_config.debug) {
-        uint32_t value = literal();
+        uint64_t value = literal();
         reg.ip--;
 
         cout << format("[bxl] B = B ^ {}\n", value);
-        cout << format("{:>8} = {:10} {:032b}\n", "B", reg.b, reg.b);
-        cout << format("{:>8} = {:10} {:032b}\n", value, value, value);
-        cout << format("{:>8} = {:10} {:032b}\n\n", "^", reg.b ^ value, reg.b ^ value);
+        cout << format("{:>8} = {:10} {:064b}\n", "B", reg.b, reg.b);
+        cout << format("{:>8} = {:10} {:064b}\n", value, value, value);
+        cout << format("{:>8} = {:10} {:064b}\n\n", "^", reg.b ^ value, reg.b ^ value);
       }
 
-      uint32_t value = literal();
+      uint64_t value = literal();
       reg.b          = reg.b ^ value;
     }
 
@@ -169,26 +169,26 @@ class Day17 : public aoc_2024 {
           cout << format("[bst] B = {} % 8 = \n", cstr);
         else
           cout << format("[bst] B = {} % 8 = {} % 8 \n", cstr, value);
-        cout << format("{:>8} = {:10} {:032b}\n", cstr, value, value);
-        cout << format("{:>8} = {:10} {:032b}\n", "8", 8, 8);
-        cout << format("{:>8} = {:10} {:032b}\n\n", "%", value % 8, value % 8);
+        cout << format("{:>8} = {:10} {:064b}\n", cstr, value, value);
+        cout << format("{:>8} = {:10} {:064b}\n", "8", 8, 8);
+        cout << format("{:>8} = {:10} {:064b}\n\n", "%", value % 8, value % 8);
       }
 
-      uint32_t value = combo();
+      uint64_t value = combo();
       reg.b          = value % 8;
     }
 
     // 3 - jump-not-zero; nop if A == 0 else ip = literal
     void jnz() {
       if (g_config.debug) {
-        uint32_t value = literal();
+        uint64_t value = literal();
         reg.ip--;
 
         cout << format("[jnz] {}", value) << endl;
-        cout << format("{:>8} = {:10} {:032b}\n\n", "A", reg.a, reg.a);
+        cout << format("{:>8} = {:10} {:064b}\n\n", "A", reg.a, reg.a);
       }
 
-      uint32_t value = literal();
+      uint64_t value = literal();
       if (!reg.a)
         return;
       reg.ip = value;
@@ -198,9 +198,9 @@ class Day17 : public aoc_2024 {
     void bxc() {
       if (g_config.debug) {
         cout << format("[bxc] B = B ^ C\n");
-        cout << format("{:>8} = {:10} {:032b}\n", "B", reg.b, reg.b);
-        cout << format("{:>8} = {:10} {:032b}\n", "C", reg.c, reg.c);
-        cout << format("{:>8} = {:10} {:032b}\n\n", "^", reg.b ^ reg.c, reg.b ^ reg.c);
+        cout << format("{:>8} = {:10} {:064b}\n", "B", reg.b, reg.b);
+        cout << format("{:>8} = {:10} {:064b}\n", "C", reg.c, reg.c);
+        cout << format("{:>8} = {:10} {:064b}\n\n", "^", reg.b ^ reg.c, reg.b ^ reg.c);
       }
 
       literal();
@@ -211,19 +211,19 @@ class Day17 : public aoc_2024 {
     void out() {
       if (g_config.debug) {
         string   cstr  = combo_string();
-        uint32_t value = combo();
+        uint64_t value = combo();
         reg.ip--;
 
         if (cstr == to_string(value))
           cout << format("[out] {} % 8\n", value);
         else
           cout << format("[out] {} % 8 = {} % 8 \n", cstr, value);
-        cout << format("{:>8} = {:10} {:032b}\n", cstr, value, value);
-        cout << format("{:>8} = {:10} {:032b}\n", "8", 8, 8);
-        cout << format("{:>8} = {:10} {:032b}\n", "%", value % 8, value % 8);
+        cout << format("{:>8} = {:10} {:064b}\n", cstr, value, value);
+        cout << format("{:>8} = {:10} {:064b}\n", "8", 8, 8);
+        cout << format("{:>8} = {:10} {:064b}\n", "%", value % 8, value % 8);
       }
 
-      uint32_t value = combo();
+      uint64_t value = combo();
       value %= 8;
 
       output.push_back(value);
@@ -234,19 +234,19 @@ class Day17 : public aoc_2024 {
     void bdv() {
       if (g_config.debug) {
         string   cstr  = combo_string();
-        uint32_t value = combo();
+        uint64_t value = combo();
         reg.ip--;
 
         if (cstr == to_string(value))
           cout << format("[bdv] B = A >> {}\n", cstr);
         else
           cout << format("[bdv] B = A >> {} = A >> {}\n", cstr, value);
-        cout << format("{:>8} = {:10} {:032b}\n", "A", reg.a, reg.a);
-        cout << format("{:>8} = {:10} {:032b}\n", cstr, value, value);
-        cout << format("{:>8} = {:10} {:032b}\n\n", ">>", reg.a / (1 << value), reg.a / (1 << value));
+        cout << format("{:>8} = {:10} {:064b}\n", "A", reg.a, reg.a);
+        cout << format("{:>8} = {:10} {:064b}\n", cstr, value, value);
+        cout << format("{:>8} = {:10} {:064b}\n\n", ">>", reg.a / (1 << value), reg.a / (1 << value));
       }
 
-      uint32_t value = combo();
+      uint64_t value = combo();
       reg.b          = reg.a / (1 << value);
     }
 
@@ -255,24 +255,24 @@ class Day17 : public aoc_2024 {
     void cdv() {
       if (g_config.debug) {
         string   cstr  = combo_string();
-        uint32_t value = combo();
+        uint64_t value = combo();
         reg.ip--;
 
         if (cstr == to_string(value))
           cout << format("[cdv] C = A >> {}\n", cstr);
         else
           cout << format("[cdv] C = A >> {} = A >> {}\n", cstr, value);
-        cout << format("{:>8} = {:10} {:032b}\n", "A", reg.a, reg.a);
-        cout << format("{:>8} = {:10} {:032b}\n", cstr, value, value);
-        cout << format("{:>8} = {:10} {:032b}\n\n", ">>", reg.a / (1 << value), reg.a / (1 << value));
+        cout << format("{:>8} = {:10} {:064b}\n", "A", reg.a, reg.a);
+        cout << format("{:>8} = {:10} {:064b}\n", cstr, value, value);
+        cout << format("{:>8} = {:10} {:064b}\n\n", ">>", reg.a / (1 << value), reg.a / (1 << value));
       }
 
-      uint32_t value = combo();
+      uint64_t value = combo();
       reg.c          = reg.a / (1 << value);
     }
 
     // read and increment program value
-    uint32_t read() {
+    uint64_t read() {
       // shouldn't happen in a well-formed binary
       if (reg.ip >= program.size()) {
         assert(false);
@@ -283,8 +283,8 @@ class Day17 : public aoc_2024 {
     }
 
     // combo operand; [0-3] literal + [4-7] indirect
-    uint32_t combo() {
-      uint32_t value = read();
+    uint64_t combo() {
+      uint64_t value = read();
       if (0 <= value && value <= 3)
         return value;
       if (value == 4)
@@ -299,7 +299,7 @@ class Day17 : public aoc_2024 {
     }
 
     string combo_string() {
-      uint32_t value = program[reg.ip];
+      uint64_t value = program[reg.ip];
       if (value == 0)
         return "0";
       if (value == 1)
@@ -318,7 +318,7 @@ class Day17 : public aoc_2024 {
     }
 
     // literal operand
-    uint32_t literal() {
+    uint64_t literal() {
       return read();
     }
 
@@ -389,10 +389,10 @@ TEST_F(Day17, Part2Example) {
 TEST_F(Day17, Part2) {
   reg.a = 5522;
 
-  auto print_a = [](const string& header, uint32_t a_value, uint32_t a_mask) {
-    // cout << format("{:>10} = {:10} {:032b}\n", "A mask", a_mask, a_mask);
+  auto print_a = [](const string& header, uint64_t a_value, uint64_t a_mask) {
+    // cout << format("{:>10} = {:10} {:064b}\n", "A mask", a_mask, a_mask);
     cout << format("{:>10} = ", header, "");
-    uint32_t print_mask = 1 << 31;
+    uint64_t print_mask = 1l << 63;
     while (print_mask) {
       if (a_mask & print_mask) {
         if (print_mask & a_value)
@@ -407,17 +407,17 @@ TEST_F(Day17, Part2) {
     cout << endl;
   };
 
-  queue<tuple<uint32_t, uint32_t, uint32_t>> q;
+  queue<tuple<uint64_t, uint64_t, uint64_t>> q;
 
   int p = 0;
 
-  uint32_t mask = (1 << 3) - 1;
+  uint64_t mask = (1 << 3) - 1;
   for (int i = 0; i < 8; i++)
     q.emplace(mask, i, 0);
 
   while (!q.empty() && p < program.size()) {
-    uint32_t size      = q.size();
-    uint32_t out_match = program[p];
+    uint64_t size      = q.size();
+    uint64_t out_match = program[p];
     p++;
 
     cout << format("\nMatching {} in program...", out_match);
@@ -429,22 +429,22 @@ TEST_F(Day17, Part2) {
       auto a_shift = get<2>(q.front());
       q.pop();
 
-      uint32_t a_value = a_full >> a_shift;
+      uint64_t a_value = a_full >> a_shift;
       a_mask >>= a_shift;
 
-      uint32_t b = 0;
-      uint32_t c = 0;
+      uint64_t b = 0;
+      uint64_t c = 0;
 
       b                = a_value % 8;
       b                = b ^ 5;
       c                = a_value >> b;
-      uint32_t c_shift = b;
+      uint64_t c_shift = b;
       b                = b ^ 6;
 
-      uint32_t c_correct = b ^ out_match;  // correct answer
-      uint32_t c_test    = (c_shift >= 3) ? 3 : 3 - c_shift;
-      uint32_t c_mask    = a_mask >> c_shift;
-      uint32_t c_check   = (c_correct & (~c_mask & 0x7)) | (c & 0x7);
+      uint64_t c_correct = b ^ out_match;  // correct answer
+      uint64_t c_test    = (c_shift >= 3) ? 3 : 3 - c_shift;
+      uint64_t c_mask    = a_mask >> c_shift;
+      uint64_t c_check   = (c_correct & (~c_mask & 0x7)) | (c & 0x7);
 
       bool valid = (c_correct == c_check);
 
@@ -455,8 +455,8 @@ TEST_F(Day17, Part2) {
         cout << endl;
         print_a("A", a_value, a_mask);
 
-        uint32_t space_count = 0;
-        uint32_t space_shift = -1;
+        uint64_t space_count = 0;
+        uint64_t space_shift = -1;
         for (int i = 3; i < c_shift; i++) {
           if (!(a_mask & (1 << i))) {
             space_count++;
@@ -464,11 +464,11 @@ TEST_F(Day17, Part2) {
               space_shift = i;
           }
         }
-        space_count = min<uint32_t>(space_count, 3);
+        space_count = min<uint64_t>(space_count, 3);
         if (space_count) {
           for (int i = 0; i < (1 << space_count); i++) {
-            uint32_t tmp_val  = a_value | (i << space_shift);
-            uint32_t tmp_mask = a_mask | (0x7 << space_shift);
+            uint64_t tmp_val  = a_value | (i << space_shift);
+            uint64_t tmp_mask = a_mask | (0x7 << space_shift);
 
             print_a("next", tmp_val, tmp_mask);
             q.emplace(tmp_mask, tmp_val, 3);
