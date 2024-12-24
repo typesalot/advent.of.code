@@ -407,6 +407,8 @@ TEST_F(Day17, Part2Example) {
 TEST_F(Day17, Part2) {
   reg.a = 5522;
 
+  vector<uint64_t> answers;
+
   auto print_a = [](const string& header, uint64_t a_value, uint64_t a_mask) {
     // cout << format("{:>10} = {:10} {:064b}\n", "A mask", a_mask, a_mask);
     cout << format("{:>10} = ", header, "");
@@ -497,24 +499,47 @@ TEST_F(Day17, Part2) {
             auto o = execute(next);
             cout << format("{:>10} execute({}) = {}", "", next, o) << endl;
             if (o == getProgramString())
-              assert(false);
+              answers.push_back(next);
             q.emplace(next_mask, next, a_shift + 3);
           }
         } else {
-          uint64_t next      = (a_value << a_shift) | (get<1>(q.front()) & (1l << a_shift) - 1);
-          uint64_t next_mask = (a_mask << a_shift) | (get<0>(q.front()) & (1l << a_shift) - 1);
-          print_a("next", next, next_mask);
-          auto o = execute(next);
-          cout << format("{:>10} execute({}) = {}", "", next, o) << endl;
-          if (o == getProgramString())
-            assert(false);
-          q.emplace(next_mask, next, a_shift + 3);
+          uint32_t l           = 64 - __builtin_clzll(a_mask);
+          uint32_t space_count = (l < 6) ? 6 - l : 0;
+          uint64_t space_mask  = (1 << space_count) - 1;
+          if (space_count) {
+            for (int i = 0; i < (1 << space_count); i++) {
+              uint64_t tmp_val  = a_value | (i << l);
+              uint64_t tmp_mask = a_mask | (space_mask << l);
+
+              uint64_t next      = (tmp_val << a_shift) | (get<1>(q.front()) & (1l << a_shift) - 1);
+              uint64_t next_mask = (tmp_mask << a_shift) | (get<0>(q.front()) & (1l << a_shift) - 1);
+              print_a("next", next, next_mask);
+              auto o = execute(next);
+              cout << format("{:>10} execute({}) = {}", "", next, o) << endl;
+              if (o == getProgramString())
+                answers.push_back(next);
+              q.emplace(next_mask, next, a_shift + 3);
+            }
+          } else {
+            uint64_t next      = (a_value << a_shift) | (get<1>(q.front()) & (1l << a_shift) - 1);
+            uint64_t next_mask = (a_mask << a_shift) | (get<0>(q.front()) & (1l << a_shift) - 1);
+            print_a("next", next, next_mask);
+            auto o = execute(next);
+            cout << format("{:>10} execute({}) = {}", "", next, o) << endl;
+            if (o == getProgramString())
+              answers.push_back(next);
+            q.emplace(next_mask, next, a_shift + 3);
+          }
         }
       }
 
       q.pop();
     }
   }
+
+  sort(answers.begin(), answers.end());
+  for (auto a : answers)
+    cout << "Answer = " << a << endl;
 
   return;
 
@@ -523,4 +548,5 @@ TEST_F(Day17, Part2) {
   string output  = getOutputString();
   string program = getProgramString();
   // EXPECT_EQ(output, program);
+  // 106078322331393 - correct, but too high
 }
