@@ -145,7 +145,6 @@ class string {
   private:
     std::vector<attribute> _attr;
     std::string            _str;
-    bool                   reset_formatting = false;
 
     void align_size() {
       if (_str.length() != _attr.size()) {
@@ -157,13 +156,12 @@ class string {
   public:
     template <typename... ArgsT>
     string(ArgsT... args) : _str(std::forward<ArgsT>(args)...) {
-      reset_formatting = true;
       _attr.clear();
       _attr.resize(_str.size());
     };
 
     friend std::ostream& operator<<(std::ostream& o, const string& rhs) {
-      bool had_formatting = rhs.reset_formatting;
+      bool had_formatting = false;
       for (size_t i = 0; i < rhs._str.length(); i++) {
         const attribute& attrib = rhs._attr[i];
         if (attrib.count()) {
@@ -176,6 +174,8 @@ class string {
 
         o << rhs._str[i];
       }
+
+      o << attribute::clear();
 
       return o;
     }

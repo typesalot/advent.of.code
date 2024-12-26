@@ -111,3 +111,4 @@ struct rect {
 };
 
 using rect_uint = rect<uint32_t>;
+using rect_int  = rect<int32_t>;
