@@ -19,7 +19,7 @@
 | 15  | :green_circle: | :black_circle:  |
 | 16  | :green_circle: | :black_circle:  |
 | 17  | :green_circle: | :green_circle:  |
-| 18  | :black_circle: | :black_circle:  |
+| 18  | :green_circle: | :green_circle:  |
 | 19  | :black_circle: | :black_circle:  |
 | 20  | :black_circle: | :black_circle:  |
 | 21  | :black_circle: | :black_circle:  |
