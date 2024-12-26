@@ -58,7 +58,7 @@ class color {
     }
 
     color& def() {
-      value = 39;
+      value = 0;
       return *this;
     }
 

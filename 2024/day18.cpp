@@ -1,7 +1,9 @@
 #include "test.h"
 #include "util/point.h"
 #include "util/term.h"
+#include <optional>
 #include <queue>
+#include <vector>
 
 using namespace std;
 
@@ -9,13 +11,13 @@ class Day18 : public aoc_2024 {
   protected:
     using point = point_int;
 
-    int32_t              w;
-    int32_t              h;
-    uint32_t             fall_count;
+    int32_t              w = 71;
+    int32_t              h = 71;
     point                start;
     point                end;
-    queue<point>         spawns;
+    vector<point>        spawns;
     vector<term::string> map;
+    vector<point>        path;
 
     static constexpr int north = 0;
     static constexpr int east  = 1;
@@ -30,13 +32,9 @@ class Day18 : public aoc_2024 {
       string s;
       while (getline(input, s)) {
         size_t f = s.find(",");
-        point& p = spawns.emplace();
+        point& p = spawns.emplace_back();
         p.x      = stoi(s.substr(0, f));
         p.y      = stoi(s.substr(f + 1, s.length() - f));
-        if (fall_count) {
-          map[p.y][p.x] = '#';
-          fall_count--;
-        }
       }
 
       start = {0, 0};
@@ -54,7 +52,16 @@ class Day18 : public aoc_2024 {
         cout << m << endl;
     }
 
-    uint32_t dijkstra() {
+    void reset_map() {
+      if (!g_config.debug)
+        return;
+      for (auto& m : map)
+        m.reset();
+    }
+
+    optional<uint32_t> dijkstra() {
+      reset_map();
+
       uint32_t cost = 0;
 
       int count = h * w;
@@ -73,17 +80,16 @@ class Day18 : public aoc_2024 {
 
       distances[start.flatten(w)] = 0;
 
-      using node_t      = tuple<int, int, int>;  // distance,node,direction
+      using node_t      = tuple<int, int>;  // distance,node
       using container_t = vector<node_t>;
       using comp_t      = greater<node_t>;
       priority_queue<node_t, container_t, comp_t> pq;
 
-      pq.emplace(0, start.flatten(w), east);
+      pq.emplace(0, start.flatten(w));
 
       while (!pq.empty()) {
-        int dist  = get<0>(pq.top());  // distance
-        int u     = get<1>(pq.top());  // node
-        int u_dir = get<2>(pq.top());  // direction
+        int dist = get<0>(pq.top());  // distance
+        int u    = get<1>(pq.top());  // node
         pq.pop();
 
         if (u == end.flatten(w))
@@ -93,16 +99,13 @@ class Day18 : public aoc_2024 {
           continue;
 
         point up = point::expand(u, w);
-        map[up.y].background(up.x).red();
-        print_map();
+        if (g_config.debug) {
+          map[up.y].background(up.x).red();
+          print_map();
+        }
 
         point p = point::expand(u, w);
         for (int v_dir = 0; v_dir < 4; v_dir++) {
-          // opposite directions are always mod2 because of
-          // how the cardinal directions are defined above
-          if (v_dir != u_dir && (v_dir + u_dir % 2 == 0))
-            continue;
-
           point next = p + directions[v_dir];
 
           if (!bounds.in_bounds(next) || map[next.y][next.x] == '#')
@@ -116,67 +119,151 @@ class Day18 : public aoc_2024 {
           if (distances[u] + weight < distances[v]) {
             distances[v]    = distances[u] + weight;
             predecessors[v] = u;
-            pq.emplace(distances[v], v, v_dir);
+            pq.emplace(distances[v], v);
           }
         }
       }
 
-      vector<point> path;
-      int           at = end.flatten(w);
+      path.clear();
+
+      int  at     = end.flatten(w);
+      bool exists = false;
       while (at != -1) {
         path.emplace_back(point::expand(at, w));
+
+        if (start.flatten(w) == at)
+          exists = true;
+
         at = predecessors[at];
       }
-      reverse(path.begin(), path.end());
 
-      for (auto& p : path) {
-        map[p.y].background(p.x).green();
-        print_map();
+      if (exists) {
+        reverse(path.begin(), path.end());
+
+        for (auto& p : path) {
+          map[p.y].background(p.x).green();
+          print_map();
+        }
+
+        cost = distances[end.flatten(w)];
+
+        return cost;
       }
 
-      cost = distances[end.flatten(w)];
-
-      return cost;
+      return nullopt;
     }
 
-    uint32_t countShortestPath() {
-      uint32_t answer = dijkstra();
+    uint32_t countShortestPath(uint32_t fall_count) {
+      for (int i = 0; i < fall_count; i++) {
+        const auto& s = spawns[i];
+        map[s.y][s.x] = '#';
+      }
+
+      auto answer = dijkstra();
+
+      return answer.value();
+    }
+
+    point getBlockingByte() {
+      point answer;
+
+      auto shortest = dijkstra();
+
+      for (int i = 0; i < spawns.size(); i++) {
+        const auto& s = spawns[i];
+        map[s.y][s.x] = '#';
+
+        auto f = find(path.begin(), path.end(), s);
+
+        if (f != path.end()) {
+          shortest = dijkstra();
+          if (!shortest) {
+            answer = s;
+            break;
+          }
+        }
+      }
 
       return answer;
     }
 };
 
 TEST_F(Day18, Part1Example) {
-  input      = "5,4\n"
-               "4,2\n"
-               "4,5\n"
-               "3,0\n"
-               "2,1\n"
-               "6,3\n"
-               "2,4\n"
-               "1,5\n"
-               "0,6\n"
-               "3,3\n"
-               "2,6\n"
-               "5,1\n"
-               "1,2\n"
-               "5,5\n"
-               "2,5\n"
-               "6,5\n"
-               "1,4\n"
-               "0,4\n"
-               "6,4\n"
-               "1,1\n"
-               "6,1\n"
-               "1,0\n"
-               "0,5\n"
-               "1,6\n"
-               "2,0\n";
-  w          = 7;
-  h          = 7;
-  fall_count = 12;
+  input = "5,4\n"
+          "4,2\n"
+          "4,5\n"
+          "3,0\n"
+          "2,1\n"
+          "6,3\n"
+          "2,4\n"
+          "1,5\n"
+          "0,6\n"
+          "3,3\n"
+          "2,6\n"
+          "5,1\n"
+          "1,2\n"
+          "5,5\n"
+          "2,5\n"
+          "6,5\n"
+          "1,4\n"
+          "0,4\n"
+          "6,4\n"
+          "1,1\n"
+          "6,1\n"
+          "1,0\n"
+          "0,5\n"
+          "1,6\n"
+          "2,0\n";
+  w     = 7;
+  h     = 7;
   SetUp();
 
-  uint32_t answer = countShortestPath();
+  uint32_t answer = countShortestPath(12);
   EXPECT_EQ(answer, 22);
+}
+
+TEST_F(Day18, Part1) {
+  uint32_t answer = countShortestPath(1024);
+  EXPECT_EQ(answer, 252);
+}
+
+TEST_F(Day18, Part2Example) {
+  input = "5,4\n"
+          "4,2\n"
+          "4,5\n"
+          "3,0\n"
+          "2,1\n"
+          "6,3\n"
+          "2,4\n"
+          "1,5\n"
+          "0,6\n"
+          "3,3\n"
+          "2,6\n"
+          "5,1\n"
+          "1,2\n"
+          "5,5\n"
+          "2,5\n"
+          "6,5\n"
+          "1,4\n"
+          "0,4\n"
+          "6,4\n"
+          "1,1\n"
+          "6,1\n"
+          "1,0\n"
+          "0,5\n"
+          "1,6\n"
+          "2,0\n";
+  w     = 7;
+  h     = 7;
+  SetUp();
+
+  point answer = getBlockingByte();
+  EXPECT_EQ(answer.x, 6);
+  EXPECT_EQ(answer.y, 1);
+}
+
+TEST_F(Day18, Part2) {
+  point answer = getBlockingByte();
+  EXPECT_EQ(answer.x, 5);
+  EXPECT_EQ(answer.y, 60);
 }

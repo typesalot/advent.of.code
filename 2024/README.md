@@ -61,3 +61,7 @@ I solved with a slightly modified dijkstra that included the change in direction
 ### Day 17: Chronospatial Computer
 
 Quite a fun 3-bit cpu. Part2 was challenging to handle all the corner cases. Brute forcing was impossible so I had to iteratively reconstruct the correct A using the associative XOR property ( (A^B)^C =  A^(B^C) ) with each element of the input program. The tricky part is how the correct 3bit value for C plays into how much shifting occurs. I started to wonder if I over complicated the solution. Ultimately, the runtime is 0ms and just ~100 lines so I guess I'm fine with the solution.
+
+### Day 18: RAM Run
+
+For Part1, I re-used almost exactly the dijkstra algorithm from Day 16. For Part2, I only refreshed the shortest path when a new corrupted byte landed on the path, which greatly reduced unnecessary dikjstra calls. 
