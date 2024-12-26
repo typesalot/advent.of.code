@@ -181,7 +181,11 @@ class Day17 : public aoc_2024 {
       output.clear();
     }
 
-    string execute(uint64_t a = 0) {
+    string execute() {
+      return execute(reg.a);
+    }
+
+    string execute(uint64_t a) {
       // if (g_config.debug)
       //   // cout << term::cursor::clear();
       reset(a);
