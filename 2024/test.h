@@ -13,6 +13,10 @@ class aoc_test : public ::testing::Test {
     virtual void LoadInput(std::istringstream& input) = 0;
 
     void SetUp() override {
+      // automatic flushing
+      if (g_config.debug)
+        std::cout << std::unitbuf;
+
       const ::testing::TestInfo* test_info = ::testing::UnitTest::GetInstance()->current_test_info();
 
       if (test_info->name() == std::string("Part1") || test_info->name() == std::string("Part2")) {

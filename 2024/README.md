@@ -20,7 +20,7 @@
 | 16  | :green_circle: | :black_circle:  |
 | 17  | :green_circle: | :green_circle:  |
 | 18  | :green_circle: | :green_circle:  |
-| 19  | :black_circle: | :black_circle:  |
+| 19  | :green_circle: | :black_circle:  |
 | 20  | :black_circle: | :black_circle:  |
 | 21  | :black_circle: | :black_circle:  |
 | 22  | :black_circle: | :black_circle:  |
@@ -65,3 +65,7 @@ Quite a fun 3-bit cpu. Part2 was challenging to handle all the corner cases. Bru
 ### Day 18: RAM Run
 
 For Part1, I re-used almost exactly the dijkstra algorithm from Day 16. For Part2, I only refreshed the shortest path when a new corrupted byte landed on the path, which greatly reduced unnecessary dikjstra calls. 
+
+### Day 19: Linen Layout
+
+I converted the input into a graph and then dfs to figure out for each terminal point which combinations were allowed. I then employed a little dynamic programming to keep a history of previously explored branches and their results to avoid loops and re-tracing.

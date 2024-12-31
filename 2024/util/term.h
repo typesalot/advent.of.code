@@ -160,6 +160,11 @@ class string {
       _attr.resize(_str.size());
     };
 
+    string(char t) : _str(1, t) {
+      _attr.clear();
+      _attr.resize(_str.size());
+    };
+
     friend std::ostream& operator<<(std::ostream& o, const string& rhs) {
       bool had_formatting = false;
       for (size_t i = 0; i < rhs._str.length(); i++) {
@@ -189,12 +194,12 @@ class string {
         a.reset();
     }
 
-    auto foreground(uint32_t position) -> decltype(_attr[position].fg)& {
+    auto foreground(uint32_t position = 0) -> decltype(_attr[position].fg)& {
       align_size();
       return _attr[position].fg;
     }
 
-    auto background(uint32_t position) -> decltype(_attr[position].bg)& {
+    auto background(uint32_t position = 0) -> decltype(_attr[position].bg)& {
       align_size();
       return _attr[position].bg;
     }

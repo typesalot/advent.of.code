@@ -1,22 +1,34 @@
 #include "test.h"
 #include "util/string.h"
+#include "util/term.h"
 #include <algorithm>
+#include <stack>
 #include <string>
+#include <unordered_map>
 
 using namespace std;
 
 class Day19 : public aoc_2024 {
   protected:
-    vector<string> patterns;
-    vector<string> designs;
+    struct node;
+
+    vector<string>           patterns;
+    vector<string>           designs;
+    bool                     possible;
+    stack<int>               choices;
+    unordered_map<int, bool> history;
 
     struct node {
         node(char _l = '\0') : letter(_l) {};
-        ~node() = default;
 
-        char         letter;
-        bool         term = false;
-        vector<node> children;
+        ~node() {
+          for (auto c : children)
+            delete c;
+        }
+
+        char          letter;
+        bool          term = false;
+        vector<node*> children;
     };
 
     node* start = nullptr;
@@ -31,6 +43,10 @@ class Day19 : public aoc_2024 {
         designs.push_back(s);
     }
 
+    void TearDown() override {
+      delete start;
+    }
+
     void createPatternGraph() {
       start = new node();
 
@@ -42,12 +58,12 @@ class Day19 : public aoc_2024 {
         while (i < pattern.size()) {
           auto& children = current->children;
 
-          auto n = find_if(children.begin(), children.end(), [l = pattern[i]](const node& n) -> bool {
-            return n.letter == l;
+          auto n = find_if(children.begin(), children.end(), [l = pattern[i]](const node* n) -> bool {
+            return n->letter == l;
           });
 
           if (n != children.end()) {
-            current = &(*n);
+            current = *n;
             i++;
           } else {
             break;
@@ -56,39 +72,79 @@ class Day19 : public aoc_2024 {
 
         // insert the rest of the characters at that leaf location
         for (; i < pattern.size(); i++)
-          current = &current->children.emplace_back(pattern[i]);
+          current = current->children.emplace_back(new node(pattern[i]));
 
         // mark the final leaf as a terminal character
         current->term = true;
       }
     }
 
-    bool isPossible(const string& design) {
-      bool possible = true;
+    void print_choice(char letter, int offset, bool matches) {
+      if (!g_config.debug)
+        return;
+      if (letter == '\0')
+        return;
+      auto l = term::string(letter);
+      if (matches)
+        l.foreground().green();
+      else
+        l.foreground().red();
+      cout << term::cursor::set_x(offset + 1);
+      cout << l;
+      cout << endl;
+    }
 
-      node* current = start;
+    void dfs(node* current, const string& design, int start, int i, string s) {
+      char c = current->letter;
+      char l = design[i];
 
-      // find nearest leaf
-      int i = 0;
-      while (i < design.size() && possible) {
-        char  letter   = design[i];
-        auto& children = current->children;
+      if (c == l) {
+        string _s = s + c;
 
-        auto n =
-            find_if(children.begin(), children.end(), [l = letter](const node& n) -> bool { return n.letter == l; });
+        if (current->term) {
+          if (g_config.debug)
+            cout << term::cursor::set_x(start + 1) << _s << endl;
 
-        if (n != children.end()) {
-          current = &(*n);
-          i++;
-        } else if (current == start) {
-          possible = false;
-        } else {
-          possible = current->term;
-          current  = start;
+          if (i == design.length() - 1) {
+            possible = true;
+            return;
+          }
+
+          if (!history[i + 1])
+            choices.emplace(i + 1);
+        }
+
+        for (auto child : current->children) {
+          dfs(child, design, start, i + 1, _s);
         }
       }
+    }
 
-      possible = possible && current->term;
+    bool isPossible(const string& design) {
+      if (g_config.debug)
+        cout << endl << design << " = " << endl;
+
+      possible = false;
+
+      while (!choices.empty())
+        choices.pop();
+      history.clear();
+
+      choices.emplace(0);
+
+      while (!possible && !choices.empty()) {
+        int i = choices.top();
+        choices.pop();
+
+        assert(history[i] == false);
+        history[i] = true;
+
+        for (auto child : start->children) {
+          dfs(child, design, i, i, "");
+          if (possible)
+            continue;
+        }
+      }
 
       return possible;
     }
@@ -124,6 +180,8 @@ TEST_F(Day19, Part1Example) {
 }
 
 TEST_F(Day19, Part1) {
+  uint32_t answer = getPossiblePatterns();
+  EXPECT_EQ(answer, 287);
 }
 
 TEST_F(Day19, Part2Example){};
