@@ -12,11 +12,15 @@ class Day19 : public aoc_2024 {
   protected:
     struct node;
 
-    vector<string>           patterns;
-    vector<string>           designs;
-    bool                     possible;
-    stack<int>               choices;
-    unordered_map<int, bool> history;
+    static const uint32_t c_unvisited = 0;
+    static const uint32_t c_fails     = 1;
+    static const uint32_t c_matches   = 2;
+
+    vector<string>          patterns;
+    vector<string>          designs;
+    uint32_t                count;
+    stack<int>              choices;
+    unordered_map<int, int> history;
 
     struct node {
         node(char _l = '\0') : letter(_l) {};
@@ -94,6 +98,13 @@ class Day19 : public aoc_2024 {
       cout << endl;
     }
 
+    void reset() {
+      count = 0;
+      while (!choices.empty())
+        choices.pop();
+      history.clear();
+    }
+
     void dfs(node* current, const string& design, int start, int i, string s) {
       char c = current->letter;
       char l = design[i];
@@ -106,11 +117,11 @@ class Day19 : public aoc_2024 {
             cout << term::cursor::set_x(start + 1) << _s << endl;
 
           if (i == design.length() - 1) {
-            possible = true;
+            count++;
             return;
           }
 
-          if (!history[i + 1])
+          if (i + 1 < design.length() && !history[i + 1])
             choices.emplace(i + 1);
         }
 
@@ -121,32 +132,23 @@ class Day19 : public aoc_2024 {
     }
 
     bool isPossible(const string& design) {
-      if (g_config.debug)
-        cout << endl << design << " = " << endl;
-
-      possible = false;
-
-      while (!choices.empty())
-        choices.pop();
-      history.clear();
-
       choices.emplace(0);
 
-      while (!possible && !choices.empty()) {
+      while (!count && !choices.empty()) {
         int i = choices.top();
         choices.pop();
 
-        assert(history[i] == false);
         history[i] = true;
 
         for (auto child : start->children) {
-          dfs(child, design, i, i, "");
-          if (possible)
+          if (count)
             continue;
+
+          dfs(child, design, i, i, "");
         }
       }
 
-      return possible;
+      return count != 0;
     }
 
     uint32_t getPossiblePatterns() {
@@ -154,9 +156,14 @@ class Day19 : public aoc_2024 {
 
       createPatternGraph();
 
-      for (const string& s : designs)
-        if (isPossible(s))
+      for (const auto& design : designs) {
+        if (g_config.debug)
+          cout << endl << design << " = " << endl;
+        reset();
+
+        if (isPossible(design))
           answer++;
+      }
 
       return answer;
     }
