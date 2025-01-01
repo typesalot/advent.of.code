@@ -83,21 +83,6 @@ class Day19 : public aoc_2024 {
       }
     }
 
-    void print_choice(char letter, int offset, bool matches) {
-      if (!g_config.debug)
-        return;
-      if (letter == '\0')
-        return;
-      auto l = term::string(letter);
-      if (matches)
-        l.foreground().green();
-      else
-        l.foreground().red();
-      cout << term::cursor::set_x(offset + 1);
-      cout << l;
-      cout << endl;
-    }
-
     void reset() {
       count = 0;
       while (!choices.empty())
@@ -105,17 +90,84 @@ class Day19 : public aoc_2024 {
       history.clear();
     }
 
-    void dfs(node* current, const string& design, int start, int i, string s) {
+    uint32_t dfs_all(node* current, const string& design, int start, int i, string s) {
+      uint32_t count = 0;
+
       char c = current->letter;
       char l = design[i];
 
       if (c == l) {
-        string _s = s + c;
+        s += c;
 
         if (current->term) {
           if (g_config.debug)
-            cout << term::cursor::set_x(start + 1) << _s << endl;
+            cout << term::cursor::set_x(start + 1) << s << endl;
 
+          if (i == design.length() - 1)
+            count = 1;
+
+          if (i + 1 < design.length())
+            choices.emplace(i + 1);
+        }
+
+        if (i + 1 < design.length()) {
+          for (auto child : current->children) {
+            count += dfs_all(child, design, start, i + 1, s);
+          }
+        }
+      }
+
+      return count;
+    }
+
+    void countPossible(const string& design) {
+      choices.emplace(0);
+
+      vector<int> last;
+
+      while (!choices.empty()) {
+        int i = choices.top();
+        choices.pop();
+
+        while (last.size() && last.back() > i)
+          last.pop_back();
+        last.push_back(i);
+
+        uint32_t c = history[i];
+        if (c == 0) {
+          for (auto child : start->children) {
+            assert(i < design.length());
+            c += dfs_all(child, design, i, i, "");
+          }
+        }
+
+        for (auto l : last)
+          history[l] += c;
+      }
+    }
+
+    uint32_t getAllPatterns() {
+      uint32_t answer = 0;
+
+      createPatternGraph();
+
+      for (const auto& design : designs) {
+        if (g_config.debug)
+          cout << design << " = " << endl;
+        reset();
+        countPossible(design);
+        answer += history[0];
+      }
+
+      return answer;
+    }
+
+    void dfs_single(node* current, const string& design, int i) {
+      char c = current->letter;
+      char l = design[i];
+
+      if (c == l) {
+        if (current->term) {
           if (i == design.length() - 1) {
             count++;
             return;
@@ -125,8 +177,10 @@ class Day19 : public aoc_2024 {
             choices.emplace(i + 1);
         }
 
-        for (auto child : current->children) {
-          dfs(child, design, start, i + 1, _s);
+        if (i + 1 < design.length()) {
+          for (auto child : current->children) {
+            dfs_single(child, design, i + 1);
+          }
         }
       }
     }
@@ -142,9 +196,9 @@ class Day19 : public aoc_2024 {
 
         for (auto child : start->children) {
           if (count)
-            continue;
-
-          dfs(child, design, i, i, "");
+            break;
+          assert(i < design.length());
+          dfs_single(child, design, i);
         }
       }
 
@@ -157,10 +211,7 @@ class Day19 : public aoc_2024 {
       createPatternGraph();
 
       for (const auto& design : designs) {
-        if (g_config.debug)
-          cout << endl << design << " = " << endl;
         reset();
-
         if (isPossible(design))
           answer++;
       }
@@ -191,7 +242,24 @@ TEST_F(Day19, Part1) {
   EXPECT_EQ(answer, 287);
 }
 
-TEST_F(Day19, Part2Example){};
+TEST_F(Day19, Part2Example) {
+  input = "r, wr, b, g, bwu, rb, gb, br\n"
+          "\n"
+          "brwrr\n"
+          "bggr\n"
+          "gbbr\n"
+          "rrbgbr\n"
+          "ubwu\n"
+          "bwurrg\n"
+          "brgr\n"
+          "bbrgwb";
+  SetUp();
+
+  uint32_t answer = getAllPatterns();
+  EXPECT_EQ(answer, 16);
+};
 
 TEST_F(Day19, Part2) {
+  uint32_t answer = getAllPatterns();
+  EXPECT_EQ(answer, 287);
 }
