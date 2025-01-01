@@ -16,11 +16,11 @@ class Day19 : public aoc_2024 {
     static const uint32_t c_fails     = 1;
     static const uint32_t c_matches   = 2;
 
-    vector<string>          patterns;
-    vector<string>          designs;
-    uint32_t                count;
-    stack<int>              choices;
-    unordered_map<int, int> history;
+    vector<string>   patterns;
+    vector<string>   designs;
+    uint32_t         count;
+    stack<int>       choices;
+    vector<uint64_t> history;
 
     struct node {
         node(char _l = '\0') : letter(_l) {};
@@ -90,60 +90,58 @@ class Day19 : public aoc_2024 {
       history.clear();
     }
 
-    uint32_t dfs_all(node* current, const string& design, int start, int i, string s) {
-      uint32_t count = 0;
-
+    void dfs_all(node* current, const string& design, int i, stack<int>& candidates) {
       char c = current->letter;
       char l = design[i];
 
       if (c == l) {
-        s += c;
+        if (current->term && i + 1 < design.length())
+          candidates.emplace(i + 1);
 
-        if (current->term) {
-          if (g_config.debug)
-            cout << term::cursor::set_x(start + 1) << s << endl;
-
-          if (i == design.length() - 1)
-            count = 1;
-
-          if (i + 1 < design.length())
-            choices.emplace(i + 1);
-        }
-
-        if (i + 1 < design.length()) {
-          for (auto child : current->children) {
-            count += dfs_all(child, design, start, i + 1, s);
-          }
-        }
+        if (i + 1 < design.length())
+          for (auto child : current->children)
+            dfs_all(child, design, i + 1, candidates);
       }
-
-      return count;
     }
 
-    void countPossible(const string& design) {
+    uint64_t countPossible(const string& design) {
+      uint64_t count = 0;
+
+      history.resize(design.length(), 0);
       choices.emplace(0);
 
-      vector<int> last;
+      priority_queue<int> next;
+      vector<int>         last;
 
-      while (!choices.empty()) {
-        int i = choices.top();
-        choices.pop();
+      next.emplace(0);
+
+      while (!next.empty()) {
+        int i = next.top();
+        next.pop();
 
         while (last.size() && last.back() > i)
           last.pop_back();
         last.push_back(i);
 
-        uint32_t c = history[i];
-        if (c == 0) {
-          for (auto child : start->children) {
-            assert(i < design.length());
-            c += dfs_all(child, design, i, i, "");
-          }
-        }
+        stack<int> candidates;
+        for (auto child : start->children)
+          dfs_all(child, design, i, candidates);
 
-        for (auto l : last)
-          history[l] += c;
+        while (!candidates.empty()) {
+          int c = candidates.top();
+          candidates.pop();
+
+          if (g_config.debug)
+            cout << term::cursor::set_x(i + 1) << design.substr(i, c - i) << endl;
+
+          if (c == design.length() - 1)
+            count++;
+          else
+            next.push(c);
+        }
       }
+
+      return count;
     }
 
     uint32_t getAllPatterns() {
