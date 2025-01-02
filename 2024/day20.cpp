@@ -67,13 +67,6 @@ class Day20 : public aoc_2024 {
           point{-1, 0}   // west
       };
 
-      const array<point, 4> cheat_directions = {
-          point{0, -2},  // north
-          point{2, 0},   // east
-          point{0, 2},   // south
-          point{-2, 0}   // west
-      };
-
       rect_int bounds = {point{0, 0}, point{w - 1, h - 1}};
 
       vector<int> distances(count, numeric_limits<int>::max());
@@ -113,14 +106,26 @@ class Day20 : public aoc_2024 {
             continue;
 
           if (map[next.y][next.x] == '#') {
-            point cheat_dir = p + cheat_directions[v_dir];
-            if (bounds.in_bounds(cheat_dir) && map[cheat_dir.y][cheat_dir.x] != '#') {
-              cheats.emplace(next);
+            point cheat_dir = next + directions[v_dir];
 
-              if (debug())
-                map[next.y].background(next.x).blue();
+            // don't cheat out of bounds
+            if (!bounds.in_bounds(cheat_dir))
+              continue;
+
+            // don't cheat into a wall
+            if (map[cheat_dir.y][cheat_dir.x] == '#')
+              continue;
+
+            // don't cheat backwards
+            if (distances[cheat_dir.flatten(w)] != numeric_limits<int>::max())
+              continue;
+
+            if (debug()) {
+              map[next.y].background(next.x).blue();
+              print_map();
             }
 
+            cheats.emplace(next);
             continue;
           }
 
