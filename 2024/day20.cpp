@@ -15,8 +15,10 @@ class Day20 : public aoc_2024 {
     point                             end;
     vector<point>                     path;
     uint32_t                          baseline;
-    set<point>                        cheats;
     unordered_map<uint32_t, uint32_t> savings;
+    array<point, 4>                   directions;
+    rect_int                          bounds;
+    vector<bool>                      visited;
 
     void LoadInput(istringstream& input) override {
       string s;
@@ -31,8 +33,18 @@ class Day20 : public aoc_2024 {
         map.push_back(s);
       }
 
-      h = map.size();
-      w = map[0].length();
+      h      = map.size();
+      w      = map[0].length();
+      bounds = {point{0, 0}, point{w - 1, h - 1}};
+
+      directions = {
+          point{0, -1},  // north
+          point{1, 0},   // east
+          point{0, 1},   // south
+          point{-1, 0}   // west
+      };
+
+      visited.resize(w * h, false);
     }
 
     void print_map() {
@@ -53,128 +65,85 @@ class Day20 : public aoc_2024 {
         m.reset();
     }
 
-    optional<uint32_t> dijkstra() {
-      reset_map();
+    bool canCheat(const point& cheat_dir) {
+      // don't cheat out of bounds
+      if (!bounds.in_bounds(cheat_dir))
+        return false;
 
-      uint32_t cost = 0;
+      // don't cheat into a wall
+      if (map[cheat_dir.y][cheat_dir.x] == '#')
+        return false;
 
-      int count = h * w;
+      // don't cheat into a previous location (forward progress only)
+      if (visited[cheat_dir.flatten(w)])
+        return false;
 
-      const array<point, 4> directions = {
-          point{0, -1},  // north
-          point{1, 0},   // east
-          point{0, 1},   // south
-          point{-1, 0}   // west
-      };
+      return true;
+    }
+
+    uint32_t distance() {
+      uint32_t d = 0;
 
       rect_int bounds = {point{0, 0}, point{w - 1, h - 1}};
 
-      vector<int> distances(count, numeric_limits<int>::max());
-      vector<int> predecessors(count, -1);
+      vector<int> cheats;
+      cheats.resize(w * h, numeric_limits<int>::min());
 
-      distances[start.flatten(w)] = 0;
+      point p = start;
+      while (true) {
+        // update visited and print map
+        visited[p.flatten(w)] = true;
+        if (debug()) {
+          map[p.y].background(p.x).red();
+          print_map();
+        }
 
-      using node_t      = tuple<int, int>;  // distance,node
-      using container_t = vector<node_t>;
-      using comp_t      = greater<node_t>;
-      priority_queue<node_t, container_t, comp_t> pq;
+        // handle if we're currently on a cheated position
+        uint32_t cheat_distance = cheats[p.flatten(w)];
+        if (cheat_distance != numeric_limits<int>::min()) {
+          uint32_t s = d - cheat_distance;
+          savings[s]++;
+        }
 
-      pq.emplace(0, start.flatten(w));
-
-      while (!pq.empty()) {
-        int dist = get<0>(pq.top());  // distance
-        int u    = get<1>(pq.top());  // node
-        pq.pop();
-
-        if (u == end.flatten(w))
+        if (p == end)
           break;
 
-        if (dist > distances[u])
-          continue;
+        point next;
 
-        point up = point::expand(u, w);
-        if (g_config.debug) {
-          map[up.y].background(up.x).red();
-          print_map();
-        }
-
-        point p = point::expand(u, w);
-        for (int v_dir = 0; v_dir < 4; v_dir++) {
-          point next = p + directions[v_dir];
-
-          if (!bounds.in_bounds(next))
-            continue;
+        // enumerate cheats
+        for (const auto& dir : directions) {
+          next = p + dir;
 
           if (map[next.y][next.x] == '#') {
-            point cheat_dir = next + directions[v_dir];
+            point c = next + dir;
 
-            // don't cheat out of bounds
-            if (!bounds.in_bounds(cheat_dir))
-              continue;
+            if (canCheat(c)) {
+              cheats[c.flatten(w)] = d + 1;
 
-            // don't cheat into a wall
-            if (map[cheat_dir.y][cheat_dir.x] == '#')
-              continue;
-
-            // don't cheat backwards
-            if (distances[cheat_dir.flatten(w)] != numeric_limits<int>::max())
-              continue;
-
-            if (debug()) {
-              map[next.y].background(next.x).blue();
-              print_map();
+              if (debug()) {
+                map[c.y].background(c.x).blue();
+                print_map();
+              }
             }
+          }
+        }
 
-            cheats.emplace(next);
+        // non-cheat move
+        for (const auto& dir : directions) {
+          next = p + dir;
+          if (!bounds.in_bounds(next) || visited[next.flatten(w)] || map[next.y][next.x] == '#')
             continue;
-          }
-
-          uint32_t v = next.flatten(w);
-
-          // costs 1 to move to next node
-          int weight = 1;
-
-          if (distances[u] + weight < distances[v]) {
-            distances[v]    = distances[u] + weight;
-            predecessors[v] = u;
-            pq.emplace(distances[v], v);
-          }
+          break;
         }
+        p = next;
+        d++;
       }
 
-      path.clear();
-
-      int  at     = end.flatten(w);
-      bool exists = false;
-      while (at != -1) {
-        path.emplace_back(point::expand(at, w));
-
-        if (start.flatten(w) == at)
-          exists = true;
-
-        at = predecessors[at];
-      }
-
-      if (exists) {
-        reverse(path.begin(), path.end());
-
-        for (auto& p : path) {
-          map[p.y].background(p.x).green();
-          print_map();
-        }
-
-        cost = distances[end.flatten(w)];
-
-        return cost;
-      }
-
-      return nullopt;
+      return d;
     }
 
     uint32_t getCheatCount(uint32_t picoSavings) {
-      auto b = dijkstra();
-      assert(b.has_value());
-      baseline = b.value();
+      distance();
 
       return savings[picoSavings];
     }
@@ -212,4 +181,6 @@ TEST_F(Day20, Part1Example) {
 }
 
 TEST_F(Day20, Part1) {
+  uint32_t answer = getCheatCount(100);
+  EXPECT_EQ(answer, 14);
 }
