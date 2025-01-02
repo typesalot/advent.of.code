@@ -18,7 +18,7 @@ class Day19 : public aoc_2024 {
 
     vector<string>   patterns;
     vector<string>   designs;
-    uint32_t         count;
+    uint64_t         count;
     stack<int>       choices;
     vector<uint64_t> history;
 
@@ -90,12 +90,12 @@ class Day19 : public aoc_2024 {
       history.clear();
     }
 
-    void dfs_all(node* current, const string& design, int i, stack<int>& candidates) {
+    void dfs_all(node* current, const string& design, int i, queue<int>& candidates) {
       char c = current->letter;
       char l = design[i];
 
       if (c == l) {
-        if (current->term && i + 1 < design.length())
+        if (current->term && i + 1 <= design.length())
           candidates.emplace(i + 1);
 
         if (i + 1 < design.length())
@@ -105,13 +105,12 @@ class Day19 : public aoc_2024 {
     }
 
     uint64_t countPossible(const string& design) {
-      uint64_t count = 0;
-
-      history.resize(design.length(), 0);
       choices.emplace(0);
 
-      priority_queue<int> next;
-      vector<int>         last;
+      stack<int>       next;
+      vector<bool>     visited(design.length(), false);
+      vector<uint64_t> counts(design.length() + 1, 0);
+      vector<int>      last;
 
       next.emplace(0);
 
@@ -119,33 +118,53 @@ class Day19 : public aoc_2024 {
         int i = next.top();
         next.pop();
 
-        while (last.size() && last.back() > i)
+        while (last.size() && last.back() > i) {
+          auto prev = last.back();
           last.pop_back();
-        last.push_back(i);
+          counts[last.back()] += counts[prev];
+        }
 
-        stack<int> candidates;
+        if (i == design.length()) {
+          counts[last.back()]++;
+          continue;
+        }
+
+        last.push_back(i);
+        visited[i] = true;
+
+        queue<int> candidates;
         for (auto child : start->children)
           dfs_all(child, design, i, candidates);
 
         while (!candidates.empty()) {
-          int c = candidates.top();
+          int c = candidates.front();
           candidates.pop();
 
           if (g_config.debug)
             cout << term::cursor::set_x(i + 1) << design.substr(i, c - i) << endl;
 
-          if (c == design.length() - 1)
-            count++;
-          else
+          if (visited[c]) {
+            counts[i] += counts[c];
+          } else {
             next.push(c);
+          }
         }
       }
+
+      while (last.size() > 1) {
+        auto prev = last.back();
+        last.pop_back();
+        counts[last.back()] += counts[prev];
+      }
+
+      // final count is how many times we reached the last character in the design
+      count = counts[0];
 
       return count;
     }
 
-    uint32_t getAllPatterns() {
-      uint32_t answer = 0;
+    uint64_t getAllPatterns() {
+      uint64_t answer = 0;
 
       createPatternGraph();
 
@@ -153,8 +172,7 @@ class Day19 : public aoc_2024 {
         if (g_config.debug)
           cout << design << " = " << endl;
         reset();
-        countPossible(design);
-        answer += history[0];
+        answer += countPossible(design);
       }
 
       return answer;
@@ -243,9 +261,9 @@ TEST_F(Day19, Part1) {
 TEST_F(Day19, Part2Example) {
   input = "r, wr, b, g, bwu, rb, gb, br\n"
           "\n"
+          "gbbr\n"
           "brwrr\n"
           "bggr\n"
-          "gbbr\n"
           "rrbgbr\n"
           "ubwu\n"
           "bwurrg\n"
@@ -253,11 +271,11 @@ TEST_F(Day19, Part2Example) {
           "bbrgwb";
   SetUp();
 
-  uint32_t answer = getAllPatterns();
+  uint64_t answer = getAllPatterns();
   EXPECT_EQ(answer, 16);
 };
 
 TEST_F(Day19, Part2) {
-  uint32_t answer = getAllPatterns();
-  EXPECT_EQ(answer, 287);
+  uint64_t answer = getAllPatterns();
+  EXPECT_EQ(answer, 571894474468161);
 }
