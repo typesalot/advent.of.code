@@ -21,3 +21,7 @@ file(GLOB SOURCES "*.cpp" "*.h" "util/*.h" "util/*.cpp")
 
 add_executable(aoc2024 ${SOURCES})
 target_link_libraries(aoc2024 gtest_main)
+
+target_compile_definitions(aoc2024 PRIVATE
+    $<$<CONFIG:Debug>:_DEBUG>
+)

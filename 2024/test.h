@@ -14,7 +14,7 @@ class aoc_test : public ::testing::Test {
 
     void SetUp() override {
       // automatic flushing
-      if (g_config.debug)
+      if (debug())
         std::cout << std::unitbuf;
 
       const ::testing::TestInfo* test_info = ::testing::UnitTest::GetInstance()->current_test_info();
@@ -33,6 +33,10 @@ class aoc_test : public ::testing::Test {
         std::istringstream iss(input);
         this->LoadInput(iss);
       }
+    }
+
+    bool debug() const {
+      return g_config.debug;
     }
 
   private:

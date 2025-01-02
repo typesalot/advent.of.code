@@ -68,4 +68,7 @@ For Part1, I re-used almost exactly the dijkstra algorithm from Day 16. For Part
 
 ### Day 19: Linen Layout
 
-I converted the input into a graph and then dfs to figure out for each terminal point which combinations are allowed. I then employed some dynamic programming to keep a history of previously explored branches and their results to avoid loops and re-tracing. The permutations in Part2 require back propagation of previously computed paths. 
+I converted the input into a graph and then dfs to figure out for each terminal point which combinations are allowed. I then employed some dynamic programming to keep a history of previously explored branches and their results to avoid loops and re-tracing. The permutations in Part2 require back propagation of previously computed paths.
+
+### Day 20: Race Condition
+
