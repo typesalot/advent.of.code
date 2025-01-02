@@ -101,7 +101,8 @@ class Day20 : public aoc_2024 {
         // handle if we're currently on a cheated position
         uint32_t cheat_distance = cheats[p.flatten(w)];
         if (cheat_distance != numeric_limits<int>::min()) {
-          uint32_t s = d - cheat_distance;
+          uint32_t cheat_cost = 2;  // walking through a wall takes 2 picoseconds
+          uint32_t s          = d - cheat_distance - cheat_cost;
           savings[s]++;
         }
 
@@ -118,7 +119,7 @@ class Day20 : public aoc_2024 {
             point c = next + dir;
 
             if (canCheat(c)) {
-              cheats[c.flatten(w)] = d + 1;
+              cheats[c.flatten(w)] = d;
 
               if (debug()) {
                 map[c.y].background(c.x).blue();
