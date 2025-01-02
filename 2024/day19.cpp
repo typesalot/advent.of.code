@@ -12,15 +12,8 @@ class Day19 : public aoc_2024 {
   protected:
     struct node;
 
-    static const uint32_t c_unvisited = 0;
-    static const uint32_t c_fails     = 1;
-    static const uint32_t c_matches   = 2;
-
-    vector<string>   patterns;
-    vector<string>   designs;
-    uint64_t         count;
-    stack<int>       choices;
-    vector<uint64_t> history;
+    vector<string> patterns;
+    vector<string> designs;
 
     struct node {
         node(char _l = '\0') : letter(_l) {};
@@ -83,14 +76,7 @@ class Day19 : public aoc_2024 {
       }
     }
 
-    void reset() {
-      count = 0;
-      while (!choices.empty())
-        choices.pop();
-      history.clear();
-    }
-
-    void dfs_all(node* current, const string& design, int i, queue<int>& candidates) {
+    void dfs(node* current, const string& design, int i, queue<int>& candidates) {
       char c = current->letter;
       char l = design[i];
 
@@ -100,17 +86,19 @@ class Day19 : public aoc_2024 {
 
         if (i + 1 < design.length())
           for (auto child : current->children)
-            dfs_all(child, design, i + 1, candidates);
+            dfs(child, design, i + 1, candidates);
       }
     }
 
-    uint64_t countPossible(const string& design) {
-      choices.emplace(0);
+    uint64_t countPossible(const string& design, bool possible) {
+      if (g_config.debug)
+        cout << design << " = " << endl;
 
-      stack<int>       next;
-      vector<bool>     visited(design.length(), false);
-      vector<uint64_t> counts(design.length() + 1, 0);
-      vector<int>      last;
+      stack<int>       next;                        // next character position to process
+      bitset<64>       visited;                     // whether or not a node has been visited
+      vector<uint64_t> counts(design.length(), 0);  // number of paths to the exit for a given position i
+      stack<int>       last;                        // position path up to the current i
+      queue<int>       candidates;                  // list of possible next positions to be filtered
 
       next.emplace(0);
 
@@ -118,23 +106,24 @@ class Day19 : public aoc_2024 {
         int i = next.top();
         next.pop();
 
-        while (last.size() && last.back() > i) {
-          auto prev = last.back();
-          last.pop_back();
-          counts[last.back()] += counts[prev];
+        while (last.size() && last.top() > i) {
+          auto prev = last.top();
+          last.pop();
+          counts[last.top()] += counts[prev];
         }
 
         if (i == design.length()) {
-          counts[last.back()]++;
+          if (possible)
+            return 1;
+          counts[last.top()]++;
           continue;
         }
 
-        last.push_back(i);
-        visited[i] = true;
+        last.emplace(i);
+        visited.set(i);
 
-        queue<int> candidates;
         for (auto child : start->children)
-          dfs_all(child, design, i, candidates);
+          dfs(child, design, i, candidates);
 
         while (!candidates.empty()) {
           int c = candidates.front();
@@ -143,24 +132,21 @@ class Day19 : public aoc_2024 {
           if (g_config.debug)
             cout << term::cursor::set_x(i + 1) << design.substr(i, c - i) << endl;
 
-          if (visited[c]) {
+          if (visited.test(c))
             counts[i] += counts[c];
-          } else {
+          else
             next.push(c);
-          }
         }
       }
 
       while (last.size() > 1) {
-        auto prev = last.back();
-        last.pop_back();
-        counts[last.back()] += counts[prev];
+        auto prev = last.top();
+        last.pop();
+        counts[last.top()] += counts[prev];
       }
 
-      // final count is how many times we reached the last character in the design
-      count = counts[0];
-
-      return count;
+      // final count is how many back fills made it back to the start
+      return counts[0];
     }
 
     uint64_t getAllPatterns() {
@@ -168,69 +154,19 @@ class Day19 : public aoc_2024 {
 
       createPatternGraph();
 
-      for (const auto& design : designs) {
-        if (g_config.debug)
-          cout << design << " = " << endl;
-        reset();
-        answer += countPossible(design);
-      }
+      for (const auto& design : designs)
+        answer += countPossible(design, false);
 
       return answer;
     }
 
-    void dfs_single(node* current, const string& design, int i) {
-      char c = current->letter;
-      char l = design[i];
-
-      if (c == l) {
-        if (current->term) {
-          if (i == design.length() - 1) {
-            count++;
-            return;
-          }
-
-          if (i + 1 < design.length() && !history[i + 1])
-            choices.emplace(i + 1);
-        }
-
-        if (i + 1 < design.length()) {
-          for (auto child : current->children) {
-            dfs_single(child, design, i + 1);
-          }
-        }
-      }
-    }
-
-    bool isPossible(const string& design) {
-      choices.emplace(0);
-
-      while (!count && !choices.empty()) {
-        int i = choices.top();
-        choices.pop();
-
-        history[i] = true;
-
-        for (auto child : start->children) {
-          if (count)
-            break;
-          assert(i < design.length());
-          dfs_single(child, design, i);
-        }
-      }
-
-      return count != 0;
-    }
-
-    uint32_t getPossiblePatterns() {
-      uint32_t answer = 0;
+    uint64_t getPossiblePatterns() {
+      uint64_t answer = 0;
 
       createPatternGraph();
 
-      for (const auto& design : designs) {
-        reset();
-        if (isPossible(design))
-          answer++;
-      }
+      for (const auto& design : designs)
+        answer += countPossible(design, true);
 
       return answer;
     }
