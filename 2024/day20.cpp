@@ -1,6 +1,7 @@
 #include "test.h"
 #include "util/point.h"
 #include "util/term.h"
+#include <functional>
 
 using namespace std;
 
@@ -13,12 +14,9 @@ class Day20 : public aoc_2024 {
     int32_t                           h;
     point                             start;
     point                             end;
-    vector<point>                     path;
-    uint32_t                          baseline;
     unordered_map<uint32_t, uint32_t> savings;
-    array<point, 4>                   directions;
     rect_int                          bounds;
-    vector<bool>                      visited;
+    bool                              generateSavings = true;
 
     void LoadInput(istringstream& input) override {
       string s;
@@ -36,15 +34,6 @@ class Day20 : public aoc_2024 {
       h      = map.size();
       w      = map[0].length();
       bounds = {point{0, 0}, point{w - 1, h - 1}};
-
-      directions = {
-          point{0, -1},  // north
-          point{1, 0},   // east
-          point{0, 1},   // south
-          point{-1, 0}   // west
-      };
-
-      visited.resize(w * h, false);
     }
 
     void print_map() {
@@ -65,7 +54,7 @@ class Day20 : public aoc_2024 {
         m.reset();
     }
 
-    bool canCheat(const point& cheat_dir) {
+    bool canCheat(const point& cheat_dir, const vector<bool>& visited) {
       // don't cheat out of bounds
       if (!bounds.in_bounds(cheat_dir))
         return false;
@@ -81,48 +70,59 @@ class Day20 : public aoc_2024 {
       return true;
     }
 
-    uint32_t distance() {
-      uint32_t d = 0;
+    void calcSavings() {
+      vector<bool>        visited;
+      vector<vector<int>> cheats;
+      array<point, 4>     directions = {
+          point{0, -1},  // north
+          point{1, 0},   // east
+          point{0, 1},   // south
+          point{-1, 0}   // west
+      };
 
-      rect_int bounds = {point{0, 0}, point{w - 1, h - 1}};
+      visited.resize(w * h, false);
+      cheats.resize(w * h);
 
-      vector<int> cheats;
-      cheats.resize(w * h, numeric_limits<int>::min());
+      point    cur_pos  = start;
+      uint32_t cur_dist = 0;
 
-      point p = start;
       while (true) {
+        uint32_t cur_flat = cur_pos.flatten(w);
+
         // update visited and print map
-        visited[p.flatten(w)] = true;
+        visited[cur_flat] = true;
         if (debug()) {
-          map[p.y].background(p.x).red();
+          map[cur_pos.y].background(cur_pos.x).red();
           print_map();
         }
 
         // handle if we're currently on a cheated position
-        uint32_t cheat_distance = cheats[p.flatten(w)];
-        if (cheat_distance != numeric_limits<int>::min()) {
+        auto& cheat_distances = cheats[cur_flat];
+        for (const auto& cheat_dist : cheat_distances) {
           uint32_t cheat_cost = 2;  // walking through a wall takes 2 picoseconds
-          uint32_t s          = d - cheat_distance - cheat_cost;
-          savings[s]++;
+          uint32_t saving     = cur_dist - cheat_dist - cheat_cost;
+
+          savings[saving]++;
         }
 
-        if (p == end)
+        // exit if we've reached the end
+        if (cur_pos == end)
           break;
 
         point next;
 
-        // enumerate cheats
+        // enumerate future cheat positions
         for (const auto& dir : directions) {
-          next = p + dir;
+          next = cur_pos + dir;
 
           if (map[next.y][next.x] == '#') {
-            point c = next + dir;
+            point cheat_pos = next + dir;
 
-            if (canCheat(c)) {
-              cheats[c.flatten(w)] = d;
+            if (canCheat(cheat_pos, visited)) {
+              cheats[cheat_pos.flatten(w)].push_back(cur_dist);
 
               if (debug()) {
-                map[c.y].background(c.x).blue();
+                map[cheat_pos.y].background(cheat_pos.x).blue();
                 print_map();
               }
             }
@@ -131,22 +131,31 @@ class Day20 : public aoc_2024 {
 
         // non-cheat move
         for (const auto& dir : directions) {
-          next = p + dir;
-          if (!bounds.in_bounds(next) || visited[next.flatten(w)] || map[next.y][next.x] == '#')
+          next = cur_pos + dir;
+          if (!bounds.in_bounds(next) || map[next.y][next.x] == '#' || visited[next.flatten(w)])
             continue;
           break;
         }
-        p = next;
-        d++;
-      }
 
-      return d;
+        // move and increase distance
+        cur_pos = next;
+        cur_dist++;
+      }
     }
 
-    uint32_t getCheatCount(uint32_t picoSavings) {
-      distance();
+    uint32_t getCheatCount(uint32_t s, const function<bool(int, int)>& pred) {
+      if (generateSavings) {
+        calcSavings();
+        generateSavings = false;
+      }
 
-      return savings[picoSavings];
+      uint32_t count = 0;
+      for (const auto& [k, v] : savings) {
+        if (pred(k, s))
+          count += v;
+      }
+
+      return count;
     }
 };
 
@@ -168,20 +177,23 @@ TEST_F(Day20, Part1Example) {
           "###############";
   SetUp();
 
-  EXPECT_EQ(getCheatCount(2), 14);
-  EXPECT_EQ(getCheatCount(4), 14);
-  EXPECT_EQ(getCheatCount(6), 2);
-  EXPECT_EQ(getCheatCount(8), 4);
-  EXPECT_EQ(getCheatCount(10), 2);
-  EXPECT_EQ(getCheatCount(12), 3);
-  EXPECT_EQ(getCheatCount(20), 1);
-  EXPECT_EQ(getCheatCount(36), 1);
-  EXPECT_EQ(getCheatCount(38), 1);
-  EXPECT_EQ(getCheatCount(40), 1);
-  EXPECT_EQ(getCheatCount(64), 1);
+  auto eq = [](int x, int y) -> bool { return x == y; };
+
+  EXPECT_EQ(getCheatCount(2, eq), 14);
+  EXPECT_EQ(getCheatCount(4, eq), 14);
+  EXPECT_EQ(getCheatCount(6, eq), 2);
+  EXPECT_EQ(getCheatCount(8, eq), 4);
+  EXPECT_EQ(getCheatCount(10, eq), 2);
+  EXPECT_EQ(getCheatCount(12, eq), 3);
+  EXPECT_EQ(getCheatCount(20, eq), 1);
+  EXPECT_EQ(getCheatCount(36, eq), 1);
+  EXPECT_EQ(getCheatCount(38, eq), 1);
+  EXPECT_EQ(getCheatCount(40, eq), 1);
+  EXPECT_EQ(getCheatCount(64, eq), 1);
 }
 
 TEST_F(Day20, Part1) {
-  uint32_t answer = getCheatCount(100);
-  EXPECT_EQ(answer, 14);
+  auto     ge     = [](int x, int y) -> bool { return x >= y; };
+  uint32_t answer = getCheatCount(100, ge);
+  EXPECT_EQ(answer, 1452);
 }
