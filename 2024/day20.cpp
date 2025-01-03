@@ -168,8 +168,8 @@ class Day20 : public aoc_2024 {
         // handle if we're currently on a cheated position
         auto& cheat_distances = cheats[cur_flat];
         for (const auto& cheat_dist : cheat_distances) {
-          uint32_t saving = cur_dist - cheat_dist;
-          if (saving)
+          int32_t saving = cur_dist - cheat_dist;
+          if (saving >= 0)
             savings[saving]++;
         }
 
@@ -178,7 +178,14 @@ class Day20 : public aoc_2024 {
           break;
 
         // enumerate future cheat positions
+        decltype(map) tmp;
+        if (debug())
+          auto tmp = map;
         enumerateCheats(cur_pos, cur_dist, maxTime);
+        if (debug()) {
+          map = tmp;
+          print_map();
+        }
 
         // non-cheat move
         point next;
