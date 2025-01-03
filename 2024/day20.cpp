@@ -82,7 +82,7 @@ class Day20 : public aoc_2024 {
     }
 
     void enumerateCheats(const point& cur, uint32_t cur_dist, uint32_t maxTime) {
-      set<int>     cheats_visited;
+      set<int>     enum_visited;
       deque<point> next;
       next.push_back(cur);
 
@@ -97,6 +97,8 @@ class Day20 : public aoc_2024 {
         uint32_t size = next.size();
         point    p    = next.front();
 
+        enum_visited.emplace(p.flatten(w));
+
         while (size) {
           if (debug()) {
             map[p.y].background(p.x).yellow();
@@ -106,11 +108,12 @@ class Day20 : public aoc_2024 {
           for (const auto& dir : directions) {
             point walk      = p + dir;
             uint  walk_flat = walk.flatten(w);
-            char  walk_char = map[walk.y][walk.x];
 
             // don't cheat out of bounds
             if (!in_bounds(walk))
               continue;
+
+            char walk_char = map[walk.y][walk.x];
 
             // don't cheat if not ghosting
             if (d == 1 && (walk_char == '.' || isnumber(walk_char)))
@@ -118,7 +121,7 @@ class Day20 : public aoc_2024 {
 
             // don't cheat into a wall, but save it for navigation
             if (walk_char == '#') {
-              if (d < maxTime)
+              if (d < maxTime && !enum_visited.contains(walk_flat))
                 next.emplace_back(walk);
               continue;
             }
@@ -128,11 +131,11 @@ class Day20 : public aoc_2024 {
               continue;
 
             // don't visit the same cheat twice
-            if (cheats_visited.contains(walk_flat))
+            if (enum_visited.contains(walk_flat))
               continue;
 
             cheats[walk.flatten(w)].push_back(cur_dist + d);
-            cheats_visited.emplace(walk_flat);
+            enum_visited.emplace(walk_flat);
 
             if (debug()) {
               map[walk.y].background(walk.x).blue();
@@ -180,7 +183,7 @@ class Day20 : public aoc_2024 {
         // enumerate future cheat positions
         decltype(map) tmp;
         if (debug())
-          auto tmp = map;
+          tmp = map;
         enumerateCheats(cur_pos, cur_dist, maxTime);
         if (debug()) {
           map = tmp;
