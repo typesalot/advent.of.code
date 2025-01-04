@@ -72,7 +72,7 @@ struct point {
     }
 
     operator std::string() const {
-      return format("{},{}", y, x);
+      return std::format("{},{}", y, x);
     }
 
     uint32_t flatten(uint32_t width) const {
