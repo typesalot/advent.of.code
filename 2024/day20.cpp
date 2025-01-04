@@ -67,7 +67,7 @@ class Day20 : public aoc_2024 {
         m.reset();
     }
 
-    // @todo: a simplier iterative approach removes the need for the time/memory of next/explored
+    // TODO a simpler iterative approach removes the need for the time/memory of next/explored
     void enumerateCheats(const point& cur, uint32_t cur_dist, uint32_t maxTime) {
       set<uint32_t>                   explored;
       queue<pair<uint32_t, uint32_t>> next;

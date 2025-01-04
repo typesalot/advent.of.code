@@ -21,7 +21,7 @@
 | 17  | :green_circle: | :green_circle:  |
 | 18  | :green_circle: | :green_circle:  |
 | 19  | :green_circle: | :green_circle:  |
-| 20  | :black_circle: | :black_circle:  |
+| 20  | :green_circle: | :green_circle:  |
 | 21  | :black_circle: | :black_circle:  |
 | 22  | :black_circle: | :black_circle:  |
 | 23  | :black_circle: | :black_circle:  |
@@ -73,3 +73,5 @@ I converted the input into a graph and then dfs to figure out for each terminal 
 ### Day 20: Race Condition
 
 I implemented a single pass approach that for a given position i, it saves the future cheat locations and the current distance from S->i. When fairly reaching that cheat location, the algorithm calculates the distance saved. A little care is taken to consider that different positions may cheat into the same future square. Part2 increases the time allowed to phase/ghost through walls, greatly increasing the cheat potential and computational time.
+
+### Day 21: Keypad Conundrum
