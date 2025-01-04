@@ -10,16 +10,16 @@ class Day20 : public aoc_2024 {
   protected:
     using point = point_int;
 
-    vector<term::string>              map;
-    int32_t                           w;
-    int32_t                           h;
-    point                             start;
-    point                             end;
-    unordered_map<uint32_t, uint32_t> savings;
-    rect_int                          bounds;
-    vector<bool>                      visited;
-    vector<vector<int>>               cheats;
-    array<point, 4>                   directions;
+    vector<term::string>                      map;
+    int32_t                                   w;
+    int32_t                                   h;
+    point                                     start;
+    point                                     end;
+    unordered_map<uint32_t, uint32_t>         savings;
+    rect_int                                  bounds;
+    vector<bool>                              visited;
+    vector<unordered_map<uint32_t, uint32_t>> cheats;
+    array<point, 4>                           directions;
 
     void LoadInput(istringstream& input) override {
       string s;
@@ -36,7 +36,7 @@ class Day20 : public aoc_2024 {
 
       h      = map.size();
       w      = map[0].length();
-      bounds = {point{0, 0}, point{w - 1, h - 1}};
+      bounds = {point{1, 1}, point{w - 2, h - 2}};
 
       visited.resize(w * h, false);
       cheats.resize(w * h);
@@ -67,64 +67,38 @@ class Day20 : public aoc_2024 {
         m.reset();
     }
 
-    bool in_bounds(const point& p) const {
-      return bounds.in_bounds(p);
-    }
-
+    // @todo: a simplier iterative approach removes the need for the time/memory of next/explored
     void enumerateCheats(const point& cur, uint32_t cur_dist, uint32_t maxTime) {
-      set<point>   enum_visited;
-      deque<point> next;
-      next.push_back(cur);
+      set<uint32_t>                   explored;
+      queue<pair<uint32_t, uint32_t>> next;
+      next.emplace(cur.flatten(w), 0);
 
-      uint32_t d = 0;
+      while (!next.empty()) {
+        auto [n, t] = next.front();
+        next.pop();
 
-      while (!next.empty() && d < maxTime) {
-        uint32_t size = next.size();
-        point    p    = next.front();
+        for (const auto& dir : directions) {
+          point walk = point::expand(n, w) + dir;
 
-        while (size) {
-          enum_visited.emplace(p);
+          if (!bounds.in_bounds(walk))
+            continue;
 
-          if (debug()) {
-            map[p.y].background(p.x).green();
-            print_map();
+          uint32_t walk_flat = walk.flatten(w);
+
+          // don't visit the same place twice
+          if (explored.contains(walk_flat))
+            continue;
+
+          if (t != 0 && map[walk.y][walk.x] != '#' && !visited[walk_flat]) {
+            uint32_t cheat_distance = cur_dist + t + 1;
+            cheats[walk_flat][cheat_distance]++;
           }
 
-          for (const auto& dir : directions) {
-            point walk      = p + dir;
-            uint  walk_flat = walk.flatten(w);
+          if (!explored.contains(walk_flat) && t + 1 < maxTime)
+            next.emplace(walk_flat, t + 1);
 
-            // don't cheat out of bounds
-            if (!in_bounds(walk))
-              continue;
-            // don't visit the same place twice
-            if (enum_visited.contains(walk))
-              continue;
-
-            char walk_char = map[walk.y][walk.x];
-
-            if (d != 0 && walk_char != '#' && !visited[walk_flat]) {
-              cheats[walk_flat].emplace_back(cur_dist + d + 1);
-
-              if (debug()) {
-                map[walk.y].background(walk.x).blue();
-                print_map();
-              }
-            }
-
-            if (d < maxTime && !enum_visited.contains(walk))
-              next.emplace_back(walk);
-
-            enum_visited.emplace(walk);
-          }
-
-          // get next #, skipping duplicates
-          next.pop_front();
-          p = next.front();
-          size--;
+          explored.emplace(walk_flat);
         }
-
-        d++;
       }
     }
 
@@ -137,17 +111,13 @@ class Day20 : public aoc_2024 {
 
         // update visited and print map
         visited[cur_flat] = true;
-        if (debug()) {
-          map[cur_pos.y].background(cur_pos.x).red();
-          print_map();
-        }
 
         // handle if we're currently on a cheated position
         auto& cheat_distances = cheats[cur_flat];
-        for (const auto& cheat_dist : cheat_distances) {
+        for (const auto& [cheat_dist, cheat_count] : cheat_distances) {
           int32_t saving = cur_dist - cheat_dist;
           if (saving >= 0)
-            savings[saving]++;
+            savings[saving] += cheat_count;
         }
 
         // exit if we've reached the end
@@ -155,14 +125,7 @@ class Day20 : public aoc_2024 {
           break;
 
         // enumerate future cheat positions
-        decltype(map) tmp;
-        if (debug())
-          tmp = map;
         enumerateCheats(cur_pos, cur_dist, maxTime);
-        if (debug()) {
-          map = tmp;
-          print_map();
-        }
 
         // non-cheat move
         point next;
