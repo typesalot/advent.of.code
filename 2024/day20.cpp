@@ -71,22 +71,11 @@ class Day20 : public aoc_2024 {
       return bounds.in_bounds(p);
     }
 
-    void checkCheats() {
-      for (int j = 0; j < h; j++) {
-        for (int i = 0; i < w; i++) {
-          int v = j * w + i;
-          if (isnumber(map[j][i]))
-            EXPECT_EQ(cheats[v].size(), map[j][i] - '0');
-        }
-      }
-    }
-
     void enumerateCheats(const point& cur, uint32_t cur_dist, uint32_t maxTime) {
       set<point>   enum_visited;
       deque<point> next;
       next.push_back(cur);
 
-      point    last;
       uint32_t d = 0;
 
       while (!next.empty() && d < maxTime) {
@@ -108,44 +97,31 @@ class Day20 : public aoc_2024 {
             // don't cheat out of bounds
             if (!in_bounds(walk))
               continue;
-
-            char walk_char = map[walk.y][walk.x];
-
-            // don't cheat if not ghosting
-            if (d == 0 && (walk_char == '.' || walk_char == 'E' || isnumber(walk_char)))
-              continue;
-
-            // don't cheat into a wall, but save it for navigation
-            if (walk_char == '#') {
-              if (d < maxTime && !enum_visited.contains(walk))
-                next.emplace_back(walk);
-              continue;
-            }
-
-            // don't cheat into the past
-            if (visited[walk_flat])
-              continue;
-
-            // don't visit the same cheat twice
+            // don't visit the same place twice
             if (enum_visited.contains(walk))
               continue;
 
-            cheats[walk.flatten(w)].push_back(cur_dist + d + 1);
-            enum_visited.emplace(walk);
+            char walk_char = map[walk.y][walk.x];
 
-            if (debug()) {
-              map[walk.y].background(walk.x).blue();
-              print_map();
+            if (d != 0 && walk_char != '#' && !visited[walk_flat]) {
+              cheats[walk_flat].emplace_back(cur_dist + d + 1);
+
+              if (debug()) {
+                map[walk.y].background(walk.x).blue();
+                print_map();
+              }
             }
+
+            if (d < maxTime && !enum_visited.contains(walk))
+              next.emplace_back(walk);
+
+            enum_visited.emplace(walk);
           }
 
           // get next #, skipping duplicates
-          last = p;
-          do {
-            next.pop_front();
-            p = next.front();
-            size--;
-          } while (p == last);
+          next.pop_front();
+          p = next.front();
+          size--;
         }
 
         d++;
@@ -213,53 +189,6 @@ class Day20 : public aoc_2024 {
       return count;
     }
 };
-
-TEST_F(Day20, enumCaseA) {
-  input = "...............\n"
-          "......0.0......\n"
-          ".....0#0#0.....\n"
-          ".....1#S#1.....\n"
-          ".....0###0.....\n"
-          "......010......\n"
-          "..............E\n";
-  SetUp();
-
-  visited[start.flatten(w)] = true;
-
-  enumerateCheats(start, 0, 2);
-  checkCheats();
-}
-
-TEST_F(Day20, enumCaseB) {
-  input = "...............\n"
-          "......1.1......\n"
-          ".....1#1#1.....\n"
-          ".....1#S#1.....\n"
-          ".....1###1.....\n"
-          "......111......\n"
-          "..............E\n";
-  SetUp();
-
-  visited[start.flatten(w)] = true;
-
-  enumerateCheats(start, 0, 3);
-  checkCheats();
-}
-
-TEST_F(Day20, enumCaseC) {
-  input = "...............\n"
-          "...###.#.......\n"
-          "...S...#.......\n"
-          "...#####.......\n"
-          "...............\n"
-          "...............\n"
-          "..............E\n";
-  SetUp();
-
-  visited[start.flatten(w)] = true;
-
-  enumerateCheats(start, 0, 8);
-}
 
 TEST_F(Day20, Part1Example) {
   input = "###############\n"
@@ -340,4 +269,12 @@ TEST_F(Day20, Part2Example) {
   EXPECT_EQ(getCheatCount(72, eq), 22);
   EXPECT_EQ(getCheatCount(74, eq), 4);
   EXPECT_EQ(getCheatCount(76, eq), 3);
+}
+
+TEST_F(Day20, Part2) {
+  calcSavings(20);
+
+  auto     ge     = [](int x, int y) -> bool { return x >= y; };
+  uint32_t answer = getCheatCount(100, ge);
+  EXPECT_EQ(answer, 999556);
 }
