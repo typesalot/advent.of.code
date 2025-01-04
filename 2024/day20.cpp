@@ -82,7 +82,7 @@ class Day20 : public aoc_2024 {
     }
 
     void enumerateCheats(const point& cur, uint32_t cur_dist, uint32_t maxTime) {
-      set<int>     enum_visited;
+      set<point>   enum_visited;
       deque<point> next;
       next.push_back(cur);
 
@@ -90,18 +90,14 @@ class Day20 : public aoc_2024 {
       uint32_t d = 0;
 
       while (!next.empty() && d < maxTime) {
-        d++;
-
-        sort(next.begin(), next.end());
-
         uint32_t size = next.size();
         point    p    = next.front();
 
-        enum_visited.emplace(p.flatten(w));
-
         while (size) {
+          enum_visited.emplace(p);
+
           if (debug()) {
-            map[p.y].background(p.x).yellow();
+            map[p.y].background(p.x).green();
             print_map();
           }
 
@@ -116,12 +112,12 @@ class Day20 : public aoc_2024 {
             char walk_char = map[walk.y][walk.x];
 
             // don't cheat if not ghosting
-            if (d == 1 && (walk_char == '.' || isnumber(walk_char)))
+            if (d == 0 && (walk_char == '.' || walk_char == 'E' || isnumber(walk_char)))
               continue;
 
             // don't cheat into a wall, but save it for navigation
             if (walk_char == '#') {
-              if (d < maxTime && !enum_visited.contains(walk_flat))
+              if (d < maxTime && !enum_visited.contains(walk))
                 next.emplace_back(walk);
               continue;
             }
@@ -131,11 +127,11 @@ class Day20 : public aoc_2024 {
               continue;
 
             // don't visit the same cheat twice
-            if (enum_visited.contains(walk_flat))
+            if (enum_visited.contains(walk))
               continue;
 
-            cheats[walk.flatten(w)].push_back(cur_dist + d);
-            enum_visited.emplace(walk_flat);
+            cheats[walk.flatten(w)].push_back(cur_dist + d + 1);
+            enum_visited.emplace(walk);
 
             if (debug()) {
               map[walk.y].background(walk.x).blue();
@@ -151,6 +147,8 @@ class Day20 : public aoc_2024 {
             size--;
           } while (p == last);
         }
+
+        d++;
       }
     }
 
@@ -218,11 +216,11 @@ class Day20 : public aoc_2024 {
 
 TEST_F(Day20, enumCaseA) {
   input = "...............\n"
-          "...............\n"
-          "......#.#......\n"
+          "......0.0......\n"
+          ".....0#0#0.....\n"
           ".....1#S#1.....\n"
-          "......###......\n"
-          ".......1.......\n"
+          ".....0###0.....\n"
+          "......010......\n"
           "..............E\n";
   SetUp();
 
@@ -246,6 +244,21 @@ TEST_F(Day20, enumCaseB) {
 
   enumerateCheats(start, 0, 3);
   checkCheats();
+}
+
+TEST_F(Day20, enumCaseC) {
+  input = "...............\n"
+          "...###.#.......\n"
+          "...S...#.......\n"
+          "...#####.......\n"
+          "...............\n"
+          "...............\n"
+          "..............E\n";
+  SetUp();
+
+  visited[start.flatten(w)] = true;
+
+  enumerateCheats(start, 0, 8);
 }
 
 TEST_F(Day20, Part1Example) {
