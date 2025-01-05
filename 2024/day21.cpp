@@ -67,20 +67,6 @@ class Day21 : public aoc_2024 {
           else if (y > 0)
             gen(next, directions[south], x, y - 1, s + 'v');
         }
-
-        void gen_length(const point& p, const point& dir, int x, int y, int l) {
-          point next = p + dir;
-          if (next == avoid || next == dst)
-            return;
-          if (x < 0)
-            gen_length(next, directions[west], x + 1, y, l + 1);
-          else if (x > 0)
-            gen_length(next, directions[east], x - 1, y, l + 1);
-          if (y < 0)
-            gen_length(next, directions[north], x, y + 1, l + 1);
-          else if (y > 0)
-            gen_length(next, directions[south], x, y - 1, l + 1);
-        }
     };
 
     struct numeric_keypad : public keypad {
@@ -118,7 +104,7 @@ class Day21 : public aoc_2024 {
 
       // robot1
       vector<int> lengths;
-      uint32_t    min0 = numeric_limits<int>::max();
+      low = numeric_limits<int>::max();
       for (uint32_t i = 0; i < all0.size(); i++) {
         int&  l = lengths.emplace_back(0);
         point s = mov1.src;
@@ -127,10 +113,10 @@ class Day21 : public aoc_2024 {
           l += delta.manhattan() + 1;  // +1 for 'A'
           s += delta;
         }
-        min0 = min<int>(min0, l);
+        low = min<int>(low, l);
       }
       for (uint32_t i = 0; i < all0.size(); i++) {
-        if (lengths[i] != min0)
+        if (lengths[i] != low)
           continue;
 
         vector<string> a;
@@ -144,7 +130,8 @@ class Day21 : public aoc_2024 {
 
       // robot2
       lengths.clear();
-      min0 = numeric_limits<int>::max();
+      low = numeric_limits<int>::max();
+
       for (uint32_t i = 0; i < all1.size(); i++) {
         int&  l = lengths.emplace_back(0);
         point s = mov2.src;
@@ -153,12 +140,10 @@ class Day21 : public aoc_2024 {
           l += delta.manhattan() + 1;  // +1 for 'A'
           s += delta;
         }
-        min0 = min<int>(min0, l);
+        low = min<int>(low, l);
       }
-      low = min0;
 
       uint32_t n = atoi(seq.substr(0, seq.length() - 1).c_str());
-
       return n * low;
     }
 
