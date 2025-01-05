@@ -88,13 +88,11 @@ class Day21 : public aoc_2024 {
     uint32_t getComplexity(const string& seq) {
       uint32_t size = 0;
 
-      string presses;
-
       int low = numeric_limits<int>::max();
 
       vector<string> all0;
       vector<string> all1;
-      vector<string> all2;
+
       for (auto s : seq) {
         auto choices = numeric.move(s);
         all0         = combine(all0, choices);
@@ -108,9 +106,7 @@ class Day21 : public aoc_2024 {
           a            = combine(a, choices);
         }
 
-        int a_low = numeric_limits<int>::max();
-        for (auto n : a)
-          a_low = std::min<int>(a_low, n.length());
+        int a_low = a[0].length();
         if (a_low <= low) {
           if (a_low == low)
             all1.insert(all1.end(), a.begin(), a.end());
@@ -130,17 +126,8 @@ class Day21 : public aoc_2024 {
           a            = combine(a, choices);
         }
 
-        int a_low = numeric_limits<int>::max();
-        for (auto n : a)
-          a_low = std::min<int>(a_low, n.length());
-        if (a_low < low) {
-          all2 = a;
-          low  = a_low;
-        }
+        low = std::min<int>(low, a[0].length());
       }
-
-      // for (auto& a : all2)
-      //   cout << a << endl;
 
       uint32_t n = atoi(seq.substr(0, seq.length() - 1).c_str());
       uint32_t s = low;
