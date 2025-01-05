@@ -86,6 +86,10 @@ struct point {
       p.x = value % width;
       return p;
     }
+
+    T manhattan() const {
+      return abs(x) + abs(y);
+    }
 };
 
 using point_int  = point<int32_t>;

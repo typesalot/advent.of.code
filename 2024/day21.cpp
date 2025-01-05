@@ -44,6 +44,10 @@ class Day21 : public aoc_2024 {
           return choices;
         }
 
+        point delta(const point& s, char c) {
+          return point::expand(keys[c], 3) - s;
+        }
+
       private:
         void gen(const point& p, const point& dir, int x, int y, string s) {
           point next = p + dir;
@@ -62,6 +66,20 @@ class Day21 : public aoc_2024 {
             gen(next, directions[north], x, y + 1, s + '^');
           else if (y > 0)
             gen(next, directions[south], x, y - 1, s + 'v');
+        }
+
+        void gen_length(const point& p, const point& dir, int x, int y, int l) {
+          point next = p + dir;
+          if (next == avoid || next == dst)
+            return;
+          if (x < 0)
+            gen_length(next, directions[west], x + 1, y, l + 1);
+          else if (x > 0)
+            gen_length(next, directions[east], x - 1, y, l + 1);
+          if (y < 0)
+            gen_length(next, directions[north], x, y + 1, l + 1);
+          else if (y > 0)
+            gen_length(next, directions[south], x, y - 1, l + 1);
         }
     };
 
@@ -98,41 +116,50 @@ class Day21 : public aoc_2024 {
         all0         = combine(all0, choices);
       }
 
-      for (const auto& c : all0) {
-        vector<string> a;
+      // robot1
+      vector<int> lengths;
+      uint32_t    min0 = numeric_limits<int>::max();
+      for (uint32_t i = 0; i < all0.size(); i++) {
+        int&  l = lengths.emplace_back(0);
+        point s = mov1.src;
+        for (auto c : all0[i]) {
+          auto delta = mov1.delta(s, c);
+          l += delta.manhattan() + 1;  // +1 for 'A'
+          s += delta;
+        }
+        min0 = min<int>(min0, l);
+      }
+      for (uint32_t i = 0; i < all0.size(); i++) {
+        if (lengths[i] != min0)
+          continue;
 
-        for (auto s : c) {
+        vector<string> a;
+        for (auto s : all0[i]) {
           auto choices = mov1.move(s);
           a            = combine(a, choices);
         }
 
-        int a_low = a[0].length();
-        if (a_low <= low) {
-          if (a_low == low)
-            all1.insert(all1.end(), a.begin(), a.end());
-          else
-            all1 = a;
-          low = a_low;
-        }
+        all1.insert(all1.end(), a.begin(), a.end());
       }
 
-      low = numeric_limits<int>::max();
-
-      for (const auto& c : all1) {
-        vector<string> a;
-
-        for (auto s : c) {
-          auto choices = mov2.move(s);
-          a            = combine(a, choices);
+      // robot2
+      lengths.clear();
+      min0 = numeric_limits<int>::max();
+      for (uint32_t i = 0; i < all1.size(); i++) {
+        int&  l = lengths.emplace_back(0);
+        point s = mov2.src;
+        for (auto c : all1[i]) {
+          auto delta = mov2.delta(s, c);
+          l += delta.manhattan() + 1;  // +1 for 'A'
+          s += delta;
         }
-
-        low = std::min<int>(low, a[0].length());
+        min0 = min<int>(min0, l);
       }
+      low = min0;
 
       uint32_t n = atoi(seq.substr(0, seq.length() - 1).c_str());
-      uint32_t s = low;
 
-      return n * s;
+      return n * low;
     }
 
     uint32_t getTotalComplexity() {
