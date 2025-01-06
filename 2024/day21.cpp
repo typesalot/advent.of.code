@@ -12,13 +12,50 @@ class Day21 : public aoc_2024 {
     vector<string> sequences;
 
     struct keypad {
-        unordered_map<char, uint16_t> keys;
-        point                         avoid;
+        unordered_map<char, uint16_t>           keys;
+        point                                   avoid;
+        unordered_map<uint32_t, vector<string>> cache;
 
         keypad(const string& labels) : keys(labels.size()) {
           for (auto l : labels)
             keys[l] = labels.find(l);
           avoid = point::expand(keys['*'], 3);
+
+          for (auto s : labels) {
+            for (auto d : labels) {
+              point src = key(s);
+              point dst = key(d);
+
+              if (src == avoid || dst == avoid)
+                continue;
+
+              auto            k       = make_key(src, dst);
+              vector<string>& choices = cache[k];
+
+              point mov = dst - src;
+              gen(src, dst, {0, 0}, mov.x, mov.y, "", choices);
+            }
+          }
+        }
+
+        union key {
+            struct {
+                uint8_t x1 : 8;
+                uint8_t y1 : 8;
+                uint8_t x2 : 8;
+                uint8_t y2 : 8;
+            } m;
+
+            uint32_t value;
+        };
+
+        uint32_t make_key(const point& p1, const point& p2) {
+          union key k;
+          k.m.x1 = p1.x;
+          k.m.y1 = p1.y;
+          k.m.x2 = p2.x;
+          k.m.y2 = p2.y;
+          return k.value;
         }
 
         point origin() {
@@ -30,9 +67,7 @@ class Day21 : public aoc_2024 {
         }
 
         void move(const point& src, const point& dst, vector<string>& choices) {
-          point mov = dst - src;
-
-          gen(src, dst, {0, 0}, mov.x, mov.y, "", choices);
+          choices = cache[make_key(src, dst)];
         }
 
       private:
@@ -67,8 +102,12 @@ class Day21 : public aoc_2024 {
         sequences.emplace_back(s);
     }
 
+    keypad kp_mov;
+    keypad kp_numeric;
+
+    Day21() : kp_mov("*^A<v>"), kp_numeric("789456123*0A") {};
+
     uint32_t robot(vector<string>& in, vector<string>& out, bool min_only = false) {
-      keypad      kp_mov("*^A<v>");
       vector<int> lengths;
 
       int low = numeric_limits<int>::max();
@@ -117,9 +156,6 @@ class Day21 : public aoc_2024 {
       uint32_t size = 0;
 
       int low = numeric_limits<int>::max();
-
-      keypad kp_numeric("789456123*0A");
-      keypad kp_mov("*^A<v>");
 
       array<vector<string>, 3> ring;
 
