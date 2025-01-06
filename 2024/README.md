@@ -23,7 +23,7 @@
 | 19  | :green_circle: | :green_circle:  |
 | 20  | :green_circle: | :green_circle:  |
 | 21  | :green_circle: | :black_circle:  |
-| 22  | :black_circle: | :black_circle:  |
+| 22  | :green_circle: | :black_circle:  |
 | 23  | :black_circle: | :black_circle:  |
 | 24  | :black_circle: | :black_circle:  |
 | 25  | :black_circle: | :black_circle:  |
@@ -77,3 +77,7 @@ I implemented a single pass approach that for a given position i, it saves the f
 ### Day 21: Keypad Conundrum
 
 Generating the permutations efficiently was the challenge to making Part1 efficient. Although I will have to rethink my approach since it doesn't scale with 25 robots.
+
+### Day 22: Monkey Market
+
+Part1 is trivial setup for Part2.
