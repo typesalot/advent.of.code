@@ -67,38 +67,16 @@ class Day21 : public aoc_2024 {
         sequences.emplace_back(s);
     }
 
-    uint32_t getComplexity(const string& seq) {
-      uint32_t size = 0;
+    uint32_t robot(vector<string>& in, vector<string>& out, bool min_only = false) {
+      keypad      kp_mov("*^A<v>");
+      vector<int> lengths;
 
       int low = numeric_limits<int>::max();
 
-      keypad kp_numeric("789456123*0A");
-      keypad kp_mov("*^A<v>");
-
-      vector<string> all0;
-      vector<string> all1;
-
-      auto src = kp_numeric.origin();
-      for (auto c : seq) {
-        vector<string> choices;
-
-        auto dst   = kp_numeric.key(c);
-        auto delta = dst - src;
-
-        kp_numeric.move(src, dst, choices);
-
-        src += delta;
-
-        all0 = combine(all0, choices);
-      }
-
-      // robot1
-      vector<int> lengths;
-      low = numeric_limits<int>::max();
-      for (uint32_t i = 0; i < all0.size(); i++) {
+      for (uint32_t i = 0; i < in.size(); i++) {
         int&  l   = lengths.emplace_back(0);
         point src = kp_mov.origin();
-        for (auto c : all0[i]) {
+        for (auto c : in[i]) {
           auto dst   = kp_mov.key(c);
           auto delta = dst - src;
 
@@ -107,13 +85,17 @@ class Day21 : public aoc_2024 {
         }
         low = min<int>(low, l);
       }
-      for (uint32_t i = 0; i < all0.size(); i++) {
+
+      if (min_only)
+        return low;
+
+      for (uint32_t i = 0; i < in.size(); i++) {
         if (lengths[i] != low)
           continue;
 
         vector<string> a;
         point          src = kp_mov.origin();
-        for (auto c : all0[i]) {
+        for (auto c : in[i]) {
           vector<string> choices;
 
           auto dst   = kp_mov.key(c);
@@ -125,34 +107,57 @@ class Day21 : public aoc_2024 {
           a = combine(a, choices);
         }
 
-        all1.insert(all1.end(), a.begin(), a.end());
+        out.insert(out.end(), a.begin(), a.end());
       }
 
-      // robot2
-      lengths.clear();
-      low = numeric_limits<int>::max();
+      return low;
+    }
 
-      for (uint32_t i = 0; i < all1.size(); i++) {
-        int&  l   = lengths.emplace_back(0);
-        point src = kp_mov.origin();
-        for (auto c : all1[i]) {
-          auto dst   = kp_mov.key(c);
-          auto delta = dst - src;
+    uint32_t getComplexity(const string& seq, uint32_t robots) {
+      uint32_t size = 0;
 
-          l   = l + delta.manhattan() + 1;  // +1 for 'A'
-          src = src + delta;
-        }
-        low = min<int>(low, l);
+      int low = numeric_limits<int>::max();
+
+      keypad kp_numeric("789456123*0A");
+      keypad kp_mov("*^A<v>");
+
+      array<vector<string>, 3> ring;
+
+      uint32_t i = 0;
+
+      // numeric input requirement
+      auto src = kp_numeric.origin();
+      for (auto c : seq) {
+        vector<string> choices;
+        auto           dst   = kp_numeric.key(c);
+        auto           delta = dst - src;
+        kp_numeric.move(src, dst, choices);
+        src += delta;
+        ring[i] = combine(ring[i], choices);
+      }
+
+      // let the robots do their thing
+      while (robots) {
+        // last robot doesn't need to generate output
+        bool min_only = (robots == 1);
+
+        auto& in  = ring[i % 3];
+        auto& out = ring[(i + 1) % 3];
+        out.clear();
+
+        low = robot(in, out, min_only);
+        robots--;
+        i++;
       }
 
       uint32_t n = atoi(seq.substr(0, seq.length() - 1).c_str());
       return n * low;
     }
 
-    uint32_t getTotalComplexity() {
+    uint32_t getTotalComplexity(uint32_t robots) {
       uint32_t total = 0;
       for (const auto& seq : sequences)
-        total += getComplexity(seq);
+        total += getComplexity(seq, robots);
       return total;
     }
 
@@ -170,45 +175,6 @@ class Day21 : public aoc_2024 {
     };
 };
 
-TEST_F(Day21, NumericAvoid) {
-  // vector<string> c;
-  // vector<string> n;
-
-  // // Avoids *
-  // numeric.move('0', n);
-  // c = combine(c, n);
-  // n.clear();
-  // numeric.move('1', n);
-  // c = combine(c, n);
-  // n.clear();
-  // numeric.move('0', n);
-  // c = combine(c, n);
-
-  // EXPECT_EQ(c.size(), 1);
-  // EXPECT_EQ(c[0], "<A^<A>vA");
-}
-
-TEST_F(Day21, Numeric029A) {
-  // vector<string> c;
-  // vector<string> n;
-
-  // numeric.move('0', n);
-  // c = combine(c, n);
-  // n.clear();
-  // numeric.move('2', n);
-  // c = combine(c, n);
-  // n.clear();
-  // numeric.move('9', n);
-  // c = combine(c, n);
-  // n.clear();
-  // numeric.move('A', n);
-  // c = combine(c, n);
-
-  // array<string, 3> p = {"<A^A>^^AvvvA", "<A^A^>^AvvvA", "<A^A^^>AvvvA"};
-  // for (const auto& r : c)
-  //   EXPECT_NE(find(p.begin(), p.end(), r), p.end());
-}
-
 TEST_F(Day21, Part1Example) {
   input = "029A\n"
           "980A\n"
@@ -217,11 +183,16 @@ TEST_F(Day21, Part1Example) {
           "379A";
   SetUp();
 
-  auto answer = getTotalComplexity();
+  auto answer = getTotalComplexity(2);
   EXPECT_EQ(answer, 126384);
 }
 
 TEST_F(Day21, Part1) {
-  auto answer = getTotalComplexity();
+  auto answer = getTotalComplexity(2);
+  EXPECT_EQ(answer, 278568);
+}
+
+TEST_F(Day21, Part2) {
+  auto answer = getTotalComplexity(5);
   EXPECT_EQ(answer, 278568);
 }

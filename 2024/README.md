@@ -22,7 +22,7 @@
 | 18  | :green_circle: | :green_circle:  |
 | 19  | :green_circle: | :green_circle:  |
 | 20  | :green_circle: | :green_circle:  |
-| 21  | :black_circle: | :black_circle:  |
+| 21  | :green_circle: | :black_circle:  |
 | 22  | :black_circle: | :black_circle:  |
 | 23  | :black_circle: | :black_circle:  |
 | 24  | :black_circle: | :black_circle:  |
@@ -75,3 +75,5 @@ I converted the input into a graph and then dfs to figure out for each terminal 
 I implemented a single pass approach that for a given position i, it saves the future cheat locations and the current distance from S->i. When fairly reaching that cheat location, the algorithm calculates the distance saved. A little care is taken to consider that different positions may cheat into the same future square. Part2 increases the time allowed to phase/ghost through walls, greatly increasing the cheat potential and computational time.
 
 ### Day 21: Keypad Conundrum
+
+Generating the permutations efficiently was the challenge to making Part1 efficient. Although I will have to rethink my approach since it doesn't scale with 25 robots.
