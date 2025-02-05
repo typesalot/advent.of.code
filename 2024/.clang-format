@@ -1,4 +1,6 @@
-# See: https://clang.llvm.org/docs/ClangFormatStyleOptions.html
+# Expects clang-format 19.1+
+# See: https://releases.llvm.org/19.1.0/tools/clang/docs/ClangFormatStyleOptions.html
+
 # Template
 BasedOnStyle: LLVM
 
@@ -21,9 +23,7 @@ AlignConsecutiveAssignments:
   AcrossEmptyLines: false
   AcrossComments: false
 
-AlignFunctionDeclarations:
-  Enabled: true
-  AcrossEmptyLines: false
+AlignAfterOpenBracket: Align
 
 AlignConsecutiveDeclarations:
   Enabled: true
@@ -48,7 +48,7 @@ AlignTrailingComments:
 # Break Options
 BreakBeforeBinaryOperators: None
 BreakBeforeTernaryOperators: true
-BreakBinaryOperations: All
+# BreakBinaryOperations: All
 BreakConstructorInitializers: BeforeComma
 BreakInheritanceList: BeforeComma
 BreakFunctionDefinitionParameters: false
@@ -95,7 +95,8 @@ SeparateDefinitionBlocks: Always
 
 # Namespaces
 FixNamespaceComments: true
-CompactNamespaces: true
+CompactNamespaces: false
+NamespaceIndentation: Inner
 
 # Includes:
 IncludeBlocks: Preserve
@@ -113,5 +114,5 @@ SpacesBeforeTrailingComments: 2
 SpacesInAngles: false
 
 # Misc
-QualifierOrder: [inline, static, type, const, volatile]
+# QualifierOrder: [inline, static, type, const, volatile]
 SortUsingDeclarations: LexicographicNumeric
