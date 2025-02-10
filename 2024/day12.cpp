@@ -7,7 +7,7 @@
 
 using namespace std;
 
-class Day12 : public testing::Test {
+class Day12 : public aoc_2024 {
   protected:
     using point = point_int;
 
@@ -35,13 +35,23 @@ class Day12 : public testing::Test {
     vector<vector<bool>> visited;
     vector<region>       regions;
 
-    void SetUp() override {
-      auto   fname = getInputFile(2024, 12);
-      auto   f     = ifstream(fname);
+    void LoadInput(istringstream& input) override {
+      plot.clear();
+      
       string s;
-      while (getline(f, s))
+      while (getline(input, s))
         plot.push_back(s);
-    };
+
+      regions.clear();
+      visited.clear();
+
+      h = plot.size();
+      w = plot[0].length();
+
+      visited.resize(h);
+      for (auto& v : visited)
+        v.resize(w, false);
+    }
 
     void print_plot() {
       if (!g_config.debug)
@@ -60,18 +70,6 @@ class Day12 : public testing::Test {
         return;
       for (auto& r : plot)
         r.reset();
-    }
-
-    void reset() {
-      regions.clear();
-      visited.clear();
-
-      h = plot.size();
-      w = plot[0].length();
-
-      visited.resize(h);
-      for (auto& v : visited)
-        v.resize(w, false);
     }
 
     perim calcPerim(char crop, int x, int y) {
@@ -219,8 +217,6 @@ class Day12 : public testing::Test {
     }
 
     uint32_t getPrice() {
-      reset();
-
       for (int y = 0; y < h; y++) {
         for (int x = 0; x < w; x++) {
           // skip visited nodes
@@ -239,8 +235,6 @@ class Day12 : public testing::Test {
     }
 
     uint32_t getDiscountedPrice() {
-      reset();
-
       for (int y = 1; y < h; y++) {
         for (int x = 0; x < w; x++) {
           if (visited[x][y])
@@ -258,28 +252,28 @@ class Day12 : public testing::Test {
 };
 
 TEST_F(Day12, Part1Example) {
-  plot = {"RRRRIICCFF",
-          "RRRRIICCCF",
-          "VVRRRCCFFF",
-          "VVRCCCJFFF",
-          "VVVVCJJCFE",
-          "VVIVCCJJEE",
-          "VVIIICJJEE",
-          "MIIIIIJJEE",
-          "MIIISIJEEE",
-          "MMMISSJEEE"};
+  input = "RRRRIICCFF\n"
+          "RRRRIICCCF\n"
+          "VVRRRCCFFF\n"
+          "VVRCCCJFFF\n"
+          "VVVVCJJCFE\n"
+          "VVIVCCJJEE\n"
+          "VVIIICJJEE\n"
+          "MIIIIIJJEE\n"
+          "MIIISIJEEE\n"
+          "MMMISSJEEE";
+  SetUp();
 
   uint32_t price = getPrice();
   EXPECT_EQ(price, 1930);
   EXPECT_EQ(regions.size(), 11);
 
-  plot = {
-      "OOOOO",
-      "OXOXO",
-      "OOOOO",
-      "OXOXO",
-      "OOOOO",
-  };
+  input = "OOOOO\n"
+          "OXOXO\n"
+          "OOOOO\n"
+          "OXOXO\n"
+          "OOOOO";
+  SetUp();
 
   price = getPrice();
   EXPECT_EQ(price, 1 * 4 * 4 + 21 * 36);
@@ -295,53 +289,42 @@ TEST_F(Day12, Part2Example) {
   return;
   uint32_t price = 0;
 
-  plot = {
-      // clang-format off
-    "AAAA",
-    "BBCD",
-    "BBCC",
-    "EEEC"
-      // clang-format on
-  };
+  input = "AAAA\n"
+          "BBCD\n"
+          "BBCC\n"
+          "EEEC";
+  SetUp();
+
   price = getDiscountedPrice();
   EXPECT_EQ(price, 80);
 
-  plot = {
-      // clang-format off
-    "OOOOO",
-    "OXOXO",
-    "OOOOO",
-    "OXOXO",
-    "OOOOO"
-      // clang-format on
-  };
+  input = "OOOOO\n"
+          "OXOXO\n"
+          "OOOOO\n"
+          "OXOXO\n"
+          "OOOOO";
+  SetUp();
 
   price = getDiscountedPrice();
   EXPECT_EQ(price, 436);
 
-  plot = {
-      // clang-format off
-    "EEEEE",
-    "EXXXX",
-    "EEEEE",
-    "EXXXX",
-    "EEEEE"
-      // clang-format on
-  };
+  input = "EEEEE\n"
+          "EXXXX\n"
+          "EEEEE\n"
+          "EXXXX\n"
+          "EEEEE";
+  SetUp();
 
   price = getDiscountedPrice();
   EXPECT_EQ(price, 236);
 
-  plot = {
-      // clang-format off
-    "AAAAAA",
-    "AAABBA",
-    "AAABBA",
-    "ABBAAA",
-    "ABBAAA",
-    "AAAAAA"
-      // clang-format on
-  };
+  input = "AAAAAA"
+          "AAABBA"
+          "AAABBA"
+          "ABBAAA"
+          "ABBAAA"
+          "AAAAAA";
+  SetUp();
 
   price = getDiscountedPrice();
   EXPECT_EQ(price, 368);
