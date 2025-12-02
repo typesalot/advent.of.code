@@ -1,10 +1,10 @@
 import os
-import time
+from util import *
 
 def parseInput(useSample=False):
   input = []
   lines = []
-  assets_path = os.path.expanduser("~/assets/advent.of.code/2025")
+  assets_path = os.path.expanduser(os.path.join("~","assets", "advent.of.code", "2025"))
   fileName = os.path.join(assets_path,'day2.txt')
   if useSample:
     fileName = fileName.replace('.txt', 'sample.txt')
@@ -42,34 +42,16 @@ def part1(input):
   return total
 
 def part2(input):
-  pass
+  return 0
 
-print("2025, Day2")
-
-input = parseInput(True)
-start = time.perf_counter()
-result = part1(input)
-end = time.perf_counter()
-elapsed_ms = (end - start) * 1000
-print(f"Part1 Sample: {result}, Elapsed: {elapsed_ms:.3f} ms")
-
-input = parseInput()
-start = time.perf_counter()
-result = part1(input)
-end = time.perf_counter()
-elapsed_ms = (end - start) * 1000
-print(f"Part1: {result}, Elapsed: {elapsed_ms:.3f} ms")
+results = []
 
 input = parseInput(True)
-start = time.perf_counter()
-result = part2(input)
-end = time.perf_counter()
-elapsed_ms = (end - start) * 1000
-print(f"Part2 Sample: {result}, Elapsed: {elapsed_ms:.3f} ms")
+time_function("Part1 Sample",part1,input,results)
+time_function("Part2 Sample",part2,input,results)
 
 input = parseInput()
-start = time.perf_counter()
-result = part2(input)
-end = time.perf_counter()
-elapsed_ms = (end - start) * 1000
-print(f"Part2: {result}, Elapsed: {elapsed_ms:.3f} ms")
+time_function("Part1",part1,input,results)
+time_function("Part2",part2,input,results)
+
+print_results("2025 Day2", results)
