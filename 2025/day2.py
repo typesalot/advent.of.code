@@ -60,10 +60,40 @@ def part2(input):
         total = total + num
   return total
 
-input = parseInput(True)
-time_function("Part1 Sample",part1,input)
-time_function("Part2 Sample",part2,input)
+def part2_better(input):
+  def is_valid(n: int) -> bool:
+      s = str(n)
+      # [1:-1] trims off the outer characters so that only true repeated-pattern 
+      # strings will be found inside the doubled string.
+      # Example:  abab      s
+      #           abababab  (s+s)
+      #            bababa   [1:-1]
+      #             ----    s (yes)
+      #           abac
+      #           abacabac
+      #            bacaba
+      #            ??????   no 'abac'
+      #           824824824
+      #           824824824824824824
+      #            2482482482482482
+      #              --------- s, yes
+      if s in (s + s)[1:-1]:
+          return False
+      return True
+  
+  total = 0
+  for r in input:
+    for num in range(r[0],r[1]+1):
+      if not is_valid(num):
+        total = total + num
+  return total
 
+input_sample = parseInput(True)
 input = parseInput()
+
+time_function("Part1 Sample",part1,input_sample)
 time_function("Part1",part1,input)
-time_function("Part2",part2,input)
+
+time_function("Part2 Sample",part2,input_sample)
+time_function("Part2 Mine",part2,input)
+time_function("Part2 Better",part2_better,input)
