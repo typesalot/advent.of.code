@@ -42,16 +42,28 @@ def part1(input):
   return total
 
 def part2(input):
-  return 0
-
-results = []
+  def is_valid(num):
+    snum = str(num)
+    sl = len(snum)
+    l = sl // 2
+    while l > 0:
+      c = snum.count(snum[0:l],l) + 1
+      if c * l == sl:
+        return False
+      l = l - 1
+    return True
+  
+  total = 0
+  for r in input:
+    for num in range(r[0],r[1]+1):
+      if not is_valid(num):
+        total = total + num
+  return total
 
 input = parseInput(True)
-time_function("Part1 Sample",part1,input,results)
-time_function("Part2 Sample",part2,input,results)
+time_function("Part1 Sample",part1,input)
+time_function("Part2 Sample",part2,input)
 
 input = parseInput()
-time_function("Part1",part1,input,results)
-time_function("Part2",part2,input,results)
-
-print_results("2025 Day2", results)
+time_function("Part1",part1,input)
+time_function("Part2",part2,input)
