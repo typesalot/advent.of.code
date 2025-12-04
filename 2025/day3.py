@@ -21,9 +21,9 @@ def part1(input):
           if len(loc_map[u]) == 1:
             continue
           else:
-            j = loc_map[k][-2]
+            j = i
         
-        if i < j:
+        if i <= j:
           result = int(u) * 10 + int(k)
           return result
     return 0
@@ -45,6 +45,7 @@ time_function("Part1",part1,input)
 # 16412 too low
 # 16898 too low
 # 17467 too low
+# 17694 correct
 
 time_function("Part2 Sample",part2,input_sample)
 time_function("Part2",part2,input)
