@@ -24,7 +24,7 @@ def read_input(parse, useSample = False):
     frame = inspect.stack()[stack_index]
     fname = frame.filename
     stack_index = stack_index + 1
-    
+
   if useSample:
     fname = os.path.basename(fname).replace('.py', 'sample.txt')
   else:
@@ -34,6 +34,6 @@ def read_input(parse, useSample = False):
   fname = os.path.join(filePath,fname)
 
   f = open(fname,'r')
-  lines = f.readlines()
+  lines = [ l.strip() for l in f.readlines() ]
   f.close()
   return parse(lines)
