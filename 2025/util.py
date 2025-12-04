@@ -3,7 +3,7 @@ import os
 import inspect
 
 def time_function(label,func,input):
-  print(f"Running {label}... ", end = "")
+  print(f"Running {label:.<30} ", end = "")
   start = time.perf_counter()
   result = func(input)
   end = time.perf_counter()
