@@ -5,10 +5,45 @@ Advent of Code, 2025, Day 4
 from util import *
 
 def parse_input(lines):
-  return lines
+  input = []
+  # pad the boundaries so we don't have to bounds check
+  cols = len(lines[0]) + 2
+  input.append(' '*cols)
+  for l in lines:
+    input.append(f' {l} ')
+  input.append(' '*cols)
+  return input
 
 def part1(input):
-  return 0
+  cnt = 0
+  rows = len(input)
+  cols = len(input[0])
+
+  def tl(j,i): return input[j-1][i-1]
+  def tc(j,i): return input[j-1][i+0]
+  def tr(j,i): return input[j-1][i+1]
+  def cl(j,i): return input[j-0][i-1]
+  def cc(j,i): return input[j-0][i+0]
+  def cr(j,i): return input[j-0][i+1]
+  def bl(j,i): return input[j+1][i-1]
+  def bc(j,i): return input[j+1][i+0]
+  def br(j,i): return input[j+1][i+1]
+
+  for j in range(1,cols-1):
+    for i in range(1,rows-1):
+      if cc(j,i) != '@': continue
+      k_cnt = 0
+      if tl(j,i) == '@': k_cnt += 1
+      if tc(j,i) == '@': k_cnt += 1
+      if tr(j,i) == '@': k_cnt += 1
+      if cl(j,i) == '@': k_cnt += 1
+      if cr(j,i) == '@': k_cnt += 1
+      if bl(j,i) == '@': k_cnt += 1
+      if bc(j,i) == '@': k_cnt += 1
+      if br(j,i) == '@': k_cnt += 1
+      if k_cnt < 4:
+        cnt += 1
+  return cnt
 
 def part2(input):
   return 0
