@@ -9,6 +9,7 @@ Running Part2 (Mine).................. done (229.56ms). Result = Y
 Running Part2 (ChatGPT)............... done (34.57ms). Result = Y
 '''
 from util import *
+from collections import deque
 
 def parse_input(lines):
   input = []
@@ -93,9 +94,6 @@ def part2(input):
         ri = r[1]
         input[rj] = input[rj][:ri] + 'x' + input[rj][ri+1:]
   return total_cnt
-
-from collections import deque
-import sys
 
 # 8-directional neighbors (Moore neighborhood)
 NEIGHBORS = [
