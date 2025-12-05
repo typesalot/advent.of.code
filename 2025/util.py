@@ -1,6 +1,33 @@
 import time
 import os
 import inspect
+import argparse
+
+def get_args():
+  parser = argparse.ArgumentParser(description="Demo boolean flags")
+
+  parser.add_argument(
+    "--samples",
+    action="store_true",
+    help="Use sample input" )
+  
+  parser.add_argument(
+    "--input",
+    action="store_true",
+    help="Use real input" )
+
+  parser.add_argument(
+    "--chatgpt",
+    action="store_true",
+    help="Show ChatGPT solutions" )
+  
+  args = parser.parse_args()
+  if not args.input and not args.chatgpt and not args.samples:
+    args.input = True
+    args.chatgpt = True
+    args.samples = True
+  
+  return args
 
 def time_function(label,func,input):
   print(f"Running {label:.<30} ", end = "")

@@ -153,13 +153,20 @@ def part2_gpt_optimized(input):
 
 input_sample = read_sample(parse_input)
 input = read_input(parse_input)
+args = get_args()
 
-time_function("Part1 Sample",part1,input_sample)
-time_function("Part1 (Mine)",part1,input)
-time_function("Part1 (ChatGPT)",part1_gpt,input)
-time_function("Part1 (ChatGPT,Optimized)",part1_gpt_optimized,input)
+if args.samples:
+  time_function("Part1 Sample",part1,input_sample)
+if args.input:
+  time_function("Part1 (Mine)",part1,input)
+if args.chatgpt:
+  time_function("Part1 (ChatGPT)",part1_gpt,input)
+  time_function("Part1 (ChatGPT,Optimized)",part1_gpt_optimized,input)
 
-time_function("Part2 Sample",part2,input_sample)
-time_function("Part2 (Mine)",part2,input)
-time_function("Part2 (ChatGPT)",part2_gpt,input)
-time_function("Part2 (ChatGPT,Optimized)",part2_gpt_optimized,input)
+if args.samples:
+  time_function("Part2 Sample",part2,input_sample)
+if args.input:
+  time_function("Part2 (Mine)",part2,input)
+if args.chatgpt:
+  time_function("Part2 (ChatGPT)",part2_gpt,input)
+  time_function("Part2 (ChatGPT,Optimized)",part2_gpt_optimized,input)
